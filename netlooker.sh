@@ -2,9 +2,10 @@
 
 # Usage  ./adnet.sh [scopefile] [user] [pwd]
 
+# Add user auth check
+
+
 # Port scan
-
-
 # SMB host scan
 sudo nmap -Pn -sS -T4 -n -p 445 -iL $1 -oG - --open | awk '/Up$/{print $2}' > smb-nmap.txt
 nxc smb smb-nmap.txt > hosts.txt && cat hosts.txt | awk -F " " '{print$4}' > SMBHostNames.txt && cat hosts.txt | awk -F " " '{print$2}' > SMBHostIPs.txt
@@ -13,7 +14,7 @@ cat hosts.txt | grep -a signing:False > SMBsigningFalse.txt
 
 #MSSQL hosts
 sudo nmap -Pn -sS -T4 -n -p 3306 -iL $1 -oG - --open | awk '/Up$/{print $2}' > mssql-nmap.txt
-nxc mssql mssql-nmap.txt > mssqlhosts.txt && cat mssqlhosts.txt | awk -F " " '{print$4}' > MSSQLHostNames.txt && cat mssqlhosts.txt | awk -F " " '{print$2}' > MSSQLHostIPs.txt && rm mssqlhosts.t>
+nxc mssql mssql-nmap.txt > mssqlhosts.txt && cat mssqlhosts.txt | awk -F " " '{print$4}' > MSSQLHostNames.txt && cat mssqlhosts.txt | awk -F " " '{print$2}' > MSSQLHostIPs.txt && rm mssqlhosts.txt
 
 #WSUS hosts
 #SCCM hosts
@@ -21,7 +22,7 @@ nxc mssql mssql-nmap.txt > mssqlhosts.txt && cat mssqlhosts.txt | awk -F " " '{p
 #SMB share enumeration
 nxc smb SMBHostIPs.txt -u ''  -p '' --shares > nullsessions.txt
 nxc smb SMBHostIPs.txt -u 'a' -p '' --shares > Shares-Anon.txt
-nxc smb SMBHostIPs.txt -u $2  -p "$3" --shares > Shares-Auth.txt 
+nxc smb SMBHostIPs.txt -u $2  -p $3 --shares > Shares-Auth.txt 
 
 # OUTPUT
 
