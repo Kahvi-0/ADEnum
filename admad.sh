@@ -53,6 +53,8 @@ echo " "
 nxc ldap $target -u $2 -p $3 --dc-list | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | sort -u | tee dcs.txt
 echo " "
 
+echo -e "${GREEN}Checking if domain controllers have SMB Siging disabled${ENDCOLOUR}"
+nxc smb ./dcs.txt | awk -F "("  '{ ORS=" " };{print$2}{print$4}{printf"\n"}' | grep -E 'signing|name'
 
 echo -e "${GREEN}Checking for LDAP signing${ENDCOLOUR}" 
 echo " "
