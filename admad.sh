@@ -25,7 +25,6 @@ exit
 fi
 
 # Password policy
-
 echo -e "${GREEN}Getting password policy ${ENDCOLOUR}"
 echo " "
 nxc smb $target -u $2 -p $3 --pass-pol | tee  passpol.txt
@@ -47,10 +46,24 @@ echo ""
 nxc ldap $target -u $2 -p $3 -M ADCS
 echo " "
 
-
 echo -e "${GREEN}Getting all accessible DCs based on the provided target${ENDCOLOUR}"
 echo " "
 nxc ldap $target -u $2 -p $3 --dc-list | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | sort -u | tee dcs.txt
+echo " "
+
+echo -e "${GREEN}Getting all DNS servers according to DC${ENDCOLOUR}"
+echo " "
+nxc ldap $target -u $2 -p $3 -M enum_dns | tee ADDNS.txt
+echo " "
+
+echo -e "${GREEN}Getting all accounts where Pwd not required${ENDCOLOUR}"
+echo " "
+nxc ldap $target -u $2 -p $3 --password-not-required | tee Pwd-Not-Required.txt
+echo " "
+
+echo -e "${GREEN}Getting all Admins according to DC${ENDCOLOUR}"
+echo " "
+nxc ldap $target -u $2 -p $3 --admin-count | tee AD-AdminCount.txt
 echo " "
 
 echo -e "${GREEN}Checking if domain controllers have SMB Siging disabled${ENDCOLOUR}"
