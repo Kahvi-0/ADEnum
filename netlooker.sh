@@ -2,9 +2,6 @@
 
 # Usage  ./adnet.sh [scopefile] [user] [pwd]
 
-# Add user auth check
-
-
 # Port scan
 # SMB host scan
 sudo nmap -Pn -sS -T4 -n -p 445 -iL $1 -oG - --open | awk '/Up$/{print $2}' > smb-nmap.txt
@@ -20,6 +17,18 @@ nxc mssql mssql-nmap.txt > mssqlhosts.txt && cat mssqlhosts.txt | awk -F " " '{p
 #SCCM hosts
 
 #SMB share enumeration
+
+# Check if provided credentials are valid
+line=$(head -n 1 SMBHostIPs.txt)
+check=$(nxc smb $line -u $2 -p $3 | grep -o '\[+\]')
+if [[ $check == '[+]' ]]
+then
+echo " "
+else
+echo -e "${RED}Credentials were not valid${ENDCOLOUR}"
+exit
+fi
+
 nxc smb SMBHostIPs.txt -u ''  -p '' --shares > nullsessions.txt
 nxc smb SMBHostIPs.txt -u 'a' -p '' --shares > Shares-Anon.txt
 nxc smb SMBHostIPs.txt -u $2  -p $3 --shares > Shares-Auth.txt 
