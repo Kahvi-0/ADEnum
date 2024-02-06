@@ -48,7 +48,10 @@ echo " "
 
 echo -e "${GREEN}Getting all accessible DCs based on the provided target${ENDCOLOUR}"
 echo " "
-nxc ldap $target -u $2 -p $3 --dc-list | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | sort -u | tee dcs.txt
+echo -e "${BLUE}Double check for connection errors here and any possible missing DCs${ENDCOLOUR}"
+echo " "
+nxc ldap $target -u $2 -p $3 --dc-list | tee dchosts.txt
+cat dchosts.txt |  grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | sort -u | tee dcs.txt
 echo " "
 
 echo -e "${GREEN}Getting all DNS servers according to DC${ENDCOLOUR}"
@@ -76,6 +79,16 @@ echo ""
 filename=$(cat dcs.txt)
 for i in $filename; do
 nxc ldap $i -u $2 -p $3 -M ldap-checker
+done
+echo " "
+
+echo -e "${GREEN}Checking for NoPac,zerologon,printnightmare on domain controllers${ENDCOLOUR}" 
+echo "" 
+filename=$(cat dcs.txt)
+for i in $filename; do
+	nxc smb $i -u '' -p '' -M zerologon
+	nxc smb $i -u $2 -p $3 -M nopac
+	nxc smb $i -u $2 -p $3 -M printnightmare
 done
 echo " "
 
