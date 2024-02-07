@@ -1,5 +1,5 @@
-#New line ?
-#requires -version 2
+
+
 
 function New-InMemoryModule {
 
@@ -303,98 +303,6 @@ function field {
 
 function struct
 {
-<#
-.SYNOPSIS
-
-Creates an in-memory struct for use in your PowerShell session.
-
-Author: Matthew Graeber (@mattifestation)
-License: BSD 3-Clause
-Required Dependencies: None
-Optional Dependencies: field
-
-.DESCRIPTION
-
-The 'struct' function facilitates the creation of structs entirely in
-memory using as close to a "C style" as PowerShell will allow. Struct
-fields are specified using a hashtable where each field of the struct
-is comprosed of the order in which it should be defined, its .NET
-type, and optionally, its offset and special marshaling attributes.
-
-One of the features of 'struct' is that after your struct is defined,
-it will come with a built-in GetSize method as well as an explicit
-converter so that you can easily cast an IntPtr to the struct without
-relying upon calling SizeOf and/or PtrToStructure in the Marshal
-class.
-
-.PARAMETER Module
-
-The in-memory module that will host the struct. Use
-New-InMemoryModule to define an in-memory module.
-
-.PARAMETER FullName
-
-The fully-qualified name of the struct.
-
-.PARAMETER StructFields
-
-A hashtable of fields. Use the 'field' helper function to ease
-defining each field.
-
-.PARAMETER PackingSize
-
-Specifies the memory alignment of fields.
-
-.PARAMETER ExplicitLayout
-
-Indicates that an explicit offset for each field will be specified.
-
-.EXAMPLE
-
-$Mod = New-InMemoryModule -ModuleName Win32
-
-$ImageDosSignature = psenum $Mod PE.IMAGE_DOS_SIGNATURE UInt16 @{
-    DOS_SIGNATURE =    0x5A4D
-    OS2_SIGNATURE =    0x454E
-    OS2_SIGNATURE_LE = 0x454C
-    VXD_SIGNATURE =    0x454C
-}
-
-$ImageDosHeader = struct $Mod PE.IMAGE_DOS_HEADER @{
-    e_magic =    field 0 $ImageDosSignature
-    e_cblp =     field 1 UInt16
-    e_cp =       field 2 UInt16
-    e_crlc =     field 3 UInt16
-    e_cparhdr =  field 4 UInt16
-    e_minalloc = field 5 UInt16
-    e_maxalloc = field 6 UInt16
-    e_ss =       field 7 UInt16
-    e_sp =       field 8 UInt16
-    e_csum =     field 9 UInt16
-    e_ip =       field 10 UInt16
-    e_cs =       field 11 UInt16
-    e_lfarlc =   field 12 UInt16
-    e_ovno =     field 13 UInt16
-    e_res =      field 14 UInt16[] -MarshalAs @('ByValArray', 4)
-    e_oemid =    field 15 UInt16
-    e_oeminfo =  field 16 UInt16
-    e_res2 =     field 17 UInt16[] -MarshalAs @('ByValArray', 10)
-    e_lfanew =   field 18 Int32
-}
-
-# Example of using an explicit layout in order to create a union.
-$TestUnion = struct $Mod TestUnion @{
-    field1 = field 0 UInt32 0
-    field2 = field 1 IntPtr 0
-} -ExplicitLayout
-
-.NOTES
-
-PowerShell purists may disagree with the naming of this function but
-again, this was developed in such a way so as to emulate a "C style"
-definition as closely as possible. Sorry, I'm not going to name it
-New-Struct. :P
-#>
 
     [OutputType([Type])]
     Param (
@@ -521,147 +429,7 @@ New-Struct. :P
 }
 
 
-########################################################
-#
-# Misc. helpers
-#
-########################################################
-
 Function New-DynamicParameter {
-<#
-.SYNOPSIS
-
-Helper function to simplify creating dynamic parameters.
-
-    Adapated from https://beatcracker.wordpress.com/2015/08/10/dynamic-parameters-validateset-and-enums/.
-    Originally released under the Microsoft Public License (Ms-PL).
-
-.DESCRIPTION
-
-Helper function to simplify creating dynamic parameters.
-
-Example use cases:
-    Include parameters only if your environment dictates it
-    Include parameters depending on the value of a user-specified parameter
-    Provide tab completion and intellisense for parameters, depending on the environment
-
-Please keep in mind that all dynamic parameters you create, will not have corresponding variables created.
-    Use New-DynamicParameter with 'CreateVariables' switch in your main code block,
-    ('Process' for advanced functions) to create those variables.
-    Alternatively, manually reference $PSBoundParameters for the dynamic parameter value.
-
-This function has two operating modes:
-
-1. All dynamic parameters created in one pass using pipeline input to the function. This mode allows to create dynamic parameters en masse,
-with one function call. There is no need to create and maintain custom RuntimeDefinedParameterDictionary.
-
-2. Dynamic parameters are created by separate function calls and added to the RuntimeDefinedParameterDictionary you created beforehand.
-Then you output this RuntimeDefinedParameterDictionary to the pipeline. This allows more fine-grained control of the dynamic parameters,
-with custom conditions and so on.
-
-.NOTES
-
-Credits to jrich523 and ramblingcookiemonster for their initial code and inspiration:
-    https://github.com/RamblingCookieMonster/PowerShell/blob/master/New-DynamicParam.ps1
-    http://ramblingcookiemonster.wordpress.com/2014/11/27/quick-hits-credentials-and-dynamic-parameters/
-    http://jrich523.wordpress.com/2013/05/30/powershell-simple-way-to-add-dynamic-parameters-to-advanced-function/
-
-Credit to BM for alias and type parameters and their handling
-
-.PARAMETER Name
-
-Name of the dynamic parameter
-
-.PARAMETER Type
-
-Type for the dynamic parameter.  Default is string
-
-.PARAMETER Alias
-
-If specified, one or more aliases to assign to the dynamic parameter
-
-.PARAMETER Mandatory
-
-If specified, set the Mandatory attribute for this dynamic parameter
-
-.PARAMETER Position
-
-If specified, set the Position attribute for this dynamic parameter
-
-.PARAMETER HelpMessage
-
-If specified, set the HelpMessage for this dynamic parameter
-
-.PARAMETER DontShow
-
-If specified, set the DontShow for this dynamic parameter.
-This is the new PowerShell 4.0 attribute that hides parameter from tab-completion.
-http://www.powershellmagazine.com/2013/07/29/pstip-hiding-parameters-from-tab-completion/
-
-.PARAMETER ValueFromPipeline
-
-If specified, set the ValueFromPipeline attribute for this dynamic parameter
-
-.PARAMETER ValueFromPipelineByPropertyName
-
-If specified, set the ValueFromPipelineByPropertyName attribute for this dynamic parameter
-
-.PARAMETER ValueFromRemainingArguments
-
-If specified, set the ValueFromRemainingArguments attribute for this dynamic parameter
-
-.PARAMETER ParameterSetName
-
-If specified, set the ParameterSet attribute for this dynamic parameter. By default parameter is added to all parameters sets.
-
-.PARAMETER AllowNull
-
-If specified, set the AllowNull attribute of this dynamic parameter
-
-.PARAMETER AllowEmptyString
-
-If specified, set the AllowEmptyString attribute of this dynamic parameter
-
-.PARAMETER AllowEmptyCollection
-
-If specified, set the AllowEmptyCollection attribute of this dynamic parameter
-
-.PARAMETER ValidateNotNull
-
-If specified, set the ValidateNotNull attribute of this dynamic parameter
-
-.PARAMETER ValidateNotNullOrEmpty
-
-If specified, set the ValidateNotNullOrEmpty attribute of this dynamic parameter
-
-.PARAMETER ValidateRange
-
-If specified, set the ValidateRange attribute of this dynamic parameter
-
-.PARAMETER ValidateLength
-
-If specified, set the ValidateLength attribute of this dynamic parameter
-
-.PARAMETER ValidatePattern
-
-If specified, set the ValidatePattern attribute of this dynamic parameter
-
-.PARAMETER ValidateScript
-
-If specified, set the ValidateScript attribute of this dynamic parameter
-
-.PARAMETER ValidateSet
-
-If specified, set the ValidateSet attribute of this dynamic parameter
-
-.PARAMETER Dictionary
-
-If specified, add resulting RuntimeDefinedParameter to an existing RuntimeDefinedParameterDictionary.
-Appropriate for custom dynamic parameters creation.
-
-If not specified, create and return a RuntimeDefinedParameterDictionary
-Appropriate for a simple dynamic parameter creation.
-#>
 
     [CmdletBinding(DefaultParameterSetName = 'DynamicParameter')]
     Param (
@@ -885,71 +653,6 @@ Appropriate for a simple dynamic parameter creation.
 
 
 function Get-IniContent {
-<#
-.SYNOPSIS
-
-This helper parses an .ini file into a hashtable.
-
-Author: 'The Scripting Guys'
-Modifications: @harmj0y (-Credential support)
-License: BSD 3-Clause
-Required Dependencies: Add-RemoteConnection, Remove-RemoteConnection
-
-.DESCRIPTION
-
-Parses an .ini file into a hashtable. If -Credential is supplied,
-then Add-RemoteConnection is used to map \\COMPUTERNAME\IPC$, the file
-is parsed, and then the connection is destroyed with Remove-RemoteConnection.
-
-.PARAMETER Path
-
-Specifies the path to the .ini file to parse.
-
-.PARAMETER OutputObject
-
-Switch. Output a custom PSObject instead of a hashtable.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the remote system.
-
-.EXAMPLE
-
-Get-IniContent C:\Windows\example.ini
-
-.EXAMPLE
-
-"C:\Windows\example.ini" | Get-IniContent -OutputObject
-
-Outputs the .ini details as a proper nested PSObject.
-
-.EXAMPLE
-
-"C:\Windows\example.ini" | Get-IniContent
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Get-IniContent -Path \\PRIMARY.testlab.local\C$\Temp\GptTmpl.inf -Credential $Cred
-
-.INPUTS
-
-String
-
-Accepts one or more .ini paths on the pipeline.
-
-.OUTPUTS
-
-Hashtable
-
-Ouputs a hashtable representing the parsed .ini file.
-
-.LINK
-
-https://blogs.technet.microsoft.com/heyscriptingguy/2011/08/20/use-powershell-to-work-with-any-ini-file/
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [OutputType([Hashtable])]
@@ -1048,61 +751,6 @@ https://blogs.technet.microsoft.com/heyscriptingguy/2011/08/20/use-powershell-to
 
 
 function Export-PowerViewCSV {
-<#
-.SYNOPSIS
-
-Converts objects into a series of comma-separated (CSV) strings and saves the
-strings in a CSV file in a thread-safe manner.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: None  
-
-.DESCRIPTION
-
-This helper exports an -InputObject to a .csv in a thread-safe manner
-using a mutex. This is so the various multi-threaded functions in
-PowerView has a thread-safe way to export output to the same file.
-Uses .NET IO.FileStream/IO.StreamWriter objects for speed.
-
-Originally based on Dmitry Sotnikov's Export-CSV code: http://poshcode.org/1590
-
-.PARAMETER InputObject
-
-Specifies the objects to export as CSV strings.
-
-.PARAMETER Path
-
-Specifies the path to the CSV output file.
-
-.PARAMETER Delimiter
-
-Specifies a delimiter to separate the property values. The default is a comma (,)
-
-.PARAMETER Append
-
-Indicates that this cmdlet adds the CSV output to the end of the specified file.
-Without this parameter, Export-PowerViewCSV replaces the file contents without warning.
-
-.EXAMPLE
-
-Get-DomainUser | Export-PowerViewCSV -Path "users.csv"
-
-.EXAMPLE
-
-Get-DomainUser | Export-PowerViewCSV -Path "users.csv" -Append -Delimiter '|'
-
-.INPUTS
-
-PSObject
-
-Accepts one or more PSObjects on the pipeline.
-
-.LINK
-
-http://poshcode.org/1590
-http://dmitrysotnikov.wordpress.com/2010/01/19/Export-Csv-append/
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [CmdletBinding()]
@@ -1171,41 +819,6 @@ http://dmitrysotnikov.wordpress.com/2010/01/19/Export-Csv-append/
 
 
 function Resolve-IPAddress {
-<#
-.SYNOPSIS
-
-Resolves a given hostename to its associated IPv4 address.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: None  
-
-.DESCRIPTION
-
-Resolves a given hostename to its associated IPv4 address using
-[Net.Dns]::GetHostEntry(). If no hostname is provided, the default
-is the IP address of the localhost.
-
-.EXAMPLE
-
-Resolve-IPAddress -ComputerName SERVER
-
-.EXAMPLE
-
-@("SERVER1", "SERVER2") | Resolve-IPAddress
-
-.INPUTS
-
-String
-
-Accepts one or more IP address strings on the pipeline.
-
-.OUTPUTS
-
-System.Management.Automation.PSCustomObject
-
-A custom PSObject with the ComputerName and IPAddress.
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [OutputType('System.Management.Automation.PSCustomObject')]
@@ -2010,7 +1623,7 @@ function Get-DomainSPNTicket {
 }
 
 
-function Invoke-Kerberoast {
+function Invoke-Kerb {
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [OutputType('PowerView.SPNTicket')]
@@ -2319,11 +1932,11 @@ function Convert-LDAPProperty {
 }
 
 
-########################################################
-#
-# Domain info functions below.
-#
-########################################################
+
+
+
+
+
 
 function Get-DomainSearcher {
 
@@ -7770,11 +7383,11 @@ function Get-DomainDFSShare {
 }
 
 
-########################################################
-#
-# GPO related functions.
-#
-########################################################
+
+
+
+
+
 
 function Get-GptTmpl {
 
@@ -8258,107 +7871,6 @@ function Get-DomainGPO {
 
 
 function Get-DomainGPOLocalGroup {
-<#
-.SYNOPSIS
-
-Returns all GPOs in a domain that modify local group memberships through 'Restricted Groups'
-or Group Policy preferences. Also return their user membership mappings, if they exist.
-
-Author: @harmj0y  
-License: BSD 3-Clause  
-Required Dependencies: Get-DomainGPO, Get-GptTmpl, Get-GroupsXML, ConvertTo-SID, ConvertFrom-SID  
-
-.DESCRIPTION
-
-First enumerates all GPOs in the current/target domain using Get-DomainGPO with passed
-arguments, and for each GPO checks if 'Restricted Groups' are set with GptTmpl.inf or
-group membership is set through Group Policy Preferences groups.xml files. For any
-GptTmpl.inf files found, the file is parsed with Get-GptTmpl and any 'Group Membership'
-section data is processed if present. Any found Groups.xml files are parsed with
-Get-GroupsXML and those memberships are returned as well.
-
-.PARAMETER Identity
-
-A display name (e.g. 'Test GPO'), DistinguishedName (e.g. 'CN={F260B76D-55C8-46C5-BEF1-9016DD98E272},CN=Policies,CN=System,DC=testlab,DC=local'),
-GUID (e.g. '10ec320d-3111-4ef4-8faf-8f14f4adc789'), or GPO name (e.g. '{F260B76D-55C8-46C5-BEF1-9016DD98E272}'). Wildcards accepted.
-
-.PARAMETER ResolveMembersToSIDs
-
-Switch. Indicates that any member names should be resolved to their domain SIDs.
-
-.PARAMETER Domain
-
-Specifies the domain to use for the query, defaults to the current domain.
-
-.PARAMETER LDAPFilter
-
-Specifies an LDAP query string that is used to filter Active Directory objects.
-
-.PARAMETER SearchBase
-
-The LDAP source to search through, e.g. "LDAP://OU=secret,DC=testlab,DC=local"
-Useful for OU queries.
-
-.PARAMETER Server
-
-Specifies an Active Directory server (domain controller) to bind to.
-
-.PARAMETER SearchScope
-
-Specifies the scope to search under, Base/OneLevel/Subtree (default of Subtree).
-
-.PARAMETER ResultPageSize
-
-Specifies the PageSize to set for the LDAP searcher object.
-
-.PARAMETER ServerTimeLimit
-
-Specifies the maximum amount of time the server spends searching. Default of 120 seconds.
-
-.PARAMETER Tombstone
-
-Switch. Specifies that the searcher should also return deleted/tombstoned objects.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the target domain.
-
-.EXAMPLE
-
-Get-DomainGPOLocalGroup
-
-Returns all local groups set by GPO along with their members and memberof.
-
-.EXAMPLE
-
-Get-DomainGPOLocalGroup -ResolveMembersToSIDs
-
-Returns all local groups set by GPO along with their members and memberof,
-and resolve any members to their domain SIDs.
-
-.EXAMPLE
-
-'{0847C615-6C4E-4D45-A064-6001040CC21C}' | Get-DomainGPOLocalGroup
-
-Return any GPO-set groups for the GPO with the given name/GUID.
-
-.EXAMPLE
-
-Get-DomainGPOLocalGroup 'Desktops'
-
-Return any GPO-set groups for the GPO with the given display name.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Get-DomainGPOLocalGroup -Credential $Cred
-
-.LINK
-
-https://morgansimonsenblog.azurewebsites.net/tag/groups/
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [OutputType('PowerView.GPOGroup')]
@@ -8580,109 +8092,6 @@ https://morgansimonsenblog.azurewebsites.net/tag/groups/
 
 
 function Get-DomainGPOUserLocalGroupMapping {
-<#
-.SYNOPSIS
-
-Enumerates the machines where a specific domain user/group is a member of a specific
-local group, all through GPO correlation. If no user/group is specified, all
-discoverable mappings are returned.
-
-Author: @harmj0y  
-License: BSD 3-Clause  
-Required Dependencies: Get-DomainGPOLocalGroup, Get-DomainObject, Get-DomainComputer, Get-DomainOU, Get-DomainSite, Get-DomainGroup  
-
-.DESCRIPTION
-
-Takes a user/group name and optional domain, and determines the computers in the domain
-the user/group has local admin (or RDP) rights to.
-
-It does this by:
-    1.  resolving the user/group to its proper SID
-    2.  enumerating all groups the user/group is a current part of
-        and extracting all target SIDs to build a target SID list
-    3.  pulling all GPOs that set 'Restricted Groups' or Groups.xml by calling
-        Get-DomainGPOLocalGroup
-    4.  matching the target SID list to the queried GPO SID list
-        to enumerate all GPO the user is effectively applied with
-    5.  enumerating all OUs and sites and applicable GPO GUIs are
-        applied to through gplink enumerating
-    6.  querying for all computers under the given OUs or sites
-
-If no user/group is specified, all user/group -> machine mappings discovered through
-GPO relationships are returned.
-
-.PARAMETER Identity
-
-A SamAccountName (e.g. harmj0y), DistinguishedName (e.g. CN=harmj0y,CN=Users,DC=testlab,DC=local),
-SID (e.g. S-1-5-21-890171859-3433809279-3366196753-1108), or GUID (e.g. 4c435dd7-dc58-4b14-9a5e-1fdb0e80d201)
-for the user/group to identity GPO local group mappings for.
-
-.PARAMETER LocalGroup
-
-The local group to check access against.
-Can be "Administrators" (S-1-5-32-544), "RDP/Remote Desktop Users" (S-1-5-32-555),
-or a custom local SID. Defaults to local 'Administrators'.
-
-.PARAMETER Domain
-
-Specifies the domain to enumerate GPOs for, defaults to the current domain.
-
-.PARAMETER Server
-
-Specifies an Active Directory server (domain controller) to bind to.
-
-.PARAMETER SearchScope
-
-Specifies the scope to search under, Base/OneLevel/Subtree (default of Subtree).
-
-.PARAMETER ResultPageSize
-
-Specifies the PageSize to set for the LDAP searcher object.
-
-.PARAMETER ServerTimeLimit
-
-Specifies the maximum amount of time the server spends searching. Default of 120 seconds.
-
-.PARAMETER Tombstone
-
-Switch. Specifies that the searcher should also return deleted/tombstoned objects.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the target domain.
-
-.EXAMPLE
-
-Get-DomainGPOUserLocalGroupMapping
-
-Find all user/group -> machine relationships where the user/group is a member
-of the local administrators group on target machines.
-
-.EXAMPLE
-
-Get-DomainGPOUserLocalGroupMapping -Identity dfm -Domain dev.testlab.local
-
-Find all computers that dfm user has local administrator rights to in
-the dev.testlab.local domain.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Get-DomainGPOUserLocalGroupMapping -Credential $Cred
-
-.OUTPUTS
-
-PowerView.GPOLocalGroupMapping
-
-A custom PSObject containing any target identity information and what local
-group memberships they're a part of through GPO correlation.
-
-.LINK
-
-http://www.harmj0y.net/blog/redteaming/where-my-admins-at-gpo-edition/
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [OutputType('PowerView.GPOUserLocalGroupMapping')]
@@ -8882,100 +8291,6 @@ http://www.harmj0y.net/blog/redteaming/where-my-admins-at-gpo-edition/
 
 
 function Get-DomainGPOComputerLocalGroupMapping {
-<#
-.SYNOPSIS
-
-Takes a computer (or GPO) object and determines what users/groups are in the specified
-local group for the machine through GPO correlation.
-
-Author: @harmj0y  
-License: BSD 3-Clause  
-Required Dependencies: Get-DomainComputer, Get-DomainOU, Get-NetComputerSiteName, Get-DomainSite, Get-DomainGPOLocalGroup  
-
-.DESCRIPTION
-
-This function is the inverse of Get-DomainGPOUserLocalGroupMapping, and finds what users/groups
-are in the specified local group for a target machine through GPO correlation.
-
-If a -ComputerIdentity is specified, retrieve the complete computer object, attempt to
-determine the OU the computer is a part of. Then resolve the computer's site name with
-Get-NetComputerSiteName and retrieve all sites object Get-DomainSite. For those results, attempt to
-enumerate all linked GPOs and associated local group settings with Get-DomainGPOLocalGroup. For
-each resulting GPO group, resolve the resulting user/group name to a full AD object and
-return the results. This will return the domain objects that are members of the specified
--LocalGroup for the given computer.
-
-Otherwise, if -OUIdentity is supplied, the same process is executed to find linked GPOs and
-localgroup specifications.
-
-.PARAMETER ComputerIdentity
-
-A SamAccountName (e.g. WINDOWS10$), DistinguishedName (e.g. CN=WINDOWS10,CN=Computers,DC=testlab,DC=local),
-SID (e.g. S-1-5-21-890171859-3433809279-3366196753-1124), GUID (e.g. 4f16b6bc-7010-4cbf-b628-f3cfe20f6994),
-or a dns host name (e.g. windows10.testlab.local) for the computer to identity GPO local group mappings for.
-
-.PARAMETER OUIdentity
-
-An OU name (e.g. TestOU), DistinguishedName (e.g. OU=TestOU,DC=testlab,DC=local), or
-GUID (e.g. 8a9ba22a-8977-47e6-84ce-8c26af4e1e6a) for the OU to identity GPO local group mappings for.
-
-.PARAMETER LocalGroup
-
-The local group to check access against.
-Can be "Administrators" (S-1-5-32-544), "RDP/Remote Desktop Users" (S-1-5-32-555),
-or a custom local SID. Defaults to local 'Administrators'.
-
-.PARAMETER Domain
-
-Specifies the domain to enumerate GPOs for, defaults to the current domain.
-
-.PARAMETER Server
-
-Specifies an Active Directory server (domain controller) to bind to.
-
-.PARAMETER SearchScope
-
-Specifies the scope to search under, Base/OneLevel/Subtree (default of Subtree).
-
-.PARAMETER ResultPageSize
-
-Specifies the PageSize to set for the LDAP searcher object.
-
-.PARAMETER ServerTimeLimit
-
-Specifies the maximum amount of time the server spends searching. Default of 120 seconds.
-
-.PARAMETER Tombstone
-
-Switch. Specifies that the searcher should also return deleted/tombstoned objects.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the target domain.
-
-.EXAMPLE
-
-Get-DomainGPOComputerLocalGroupMapping -ComputerName WINDOWS3.testlab.local
-
-Finds users who have local admin rights over WINDOWS3 through GPO correlation.
-
-.EXAMPLE
-
-Get-DomainGPOComputerLocalGroupMapping -Domain dev.testlab.local -ComputerName WINDOWS4.dev.testlab.local -LocalGroup RDP
-
-Finds users who have RDP rights over WINDOWS4 through GPO correlation.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Get-DomainGPOComputerLocalGroupMapping -Credential $Cred -ComputerIdentity SQL.testlab.local
-
-.OUTPUTS
-
-PowerView.GGPOComputerLocalGroupMember
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [OutputType('PowerView.GGPOComputerLocalGroupMember')]
@@ -9109,79 +8424,6 @@ PowerView.GGPOComputerLocalGroupMember
 
 
 function Get-DomainPolicyData {
-<#
-.SYNOPSIS
-
-Returns the default domain policy or the domain controller policy for the current
-domain or a specified domain/domain controller.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: Get-DomainGPO, Get-GptTmpl, ConvertFrom-SID  
-
-.DESCRIPTION
-
-Returns the default domain policy or the domain controller policy for the current
-domain or a specified domain/domain controller using Get-DomainGPO.
-
-.PARAMETER Domain
-
-The domain to query for default policies, defaults to the current domain.
-
-.PARAMETER Policy
-
-Extract 'Domain', 'DC' (domain controller) policies, or 'All' for all policies.
-Otherwise queries for the particular GPO name or GUID.
-
-.PARAMETER Server
-
-Specifies an Active Directory server (domain controller) to bind to.
-
-.PARAMETER ServerTimeLimit
-
-Specifies the maximum amount of time the server spends searching. Default of 120 seconds.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the target domain.
-
-.EXAMPLE
-
-Get-DomainPolicyData
-
-Returns the default domain policy for the current domain.
-
-.EXAMPLE
-
-Get-DomainPolicyData -Domain dev.testlab.local
-
-Returns the default domain policy for the dev.testlab.local domain.
-
-.EXAMPLE
-
-Get-DomainGPO | Get-DomainPolicy
-
-Parses any GptTmpl.infs found for any policies in the current domain.
-
-.EXAMPLE
-
-Get-DomainPolicyData -Policy DC -Domain dev.testlab.local
-
-Returns the policy for the dev.testlab.local domain controller.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Get-DomainPolicyData -Credential $Cred
-
-.OUTPUTS
-
-Hashtable
-
-Ouputs a hashtable representing the parsed GptTmpl.inf file.
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [OutputType([Hashtable])]
@@ -9262,95 +8504,7 @@ Ouputs a hashtable representing the parsed GptTmpl.inf file.
     }
 }
 
-
-########################################################
-#
-# Functions that enumerate a single host, either through
-# WinNT, WMI, remote registry, or API calls
-# (with PSReflect).
-#
-########################################################
-
 function Get-NetLocalGroup {
-<#
-.SYNOPSIS
-
-Enumerates the local groups on the local (or remote) machine.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: PSReflect  
-
-.DESCRIPTION
-
-This function will enumerate the names and descriptions for the
-local groups on the current, or remote, machine. By default, the Win32 API
-call NetLocalGroupEnum will be used (for speed). Specifying "-Method WinNT"
-causes the WinNT service provider to be used instead, which returns group
-SIDs along with the group names and descriptions/comments.
-
-.PARAMETER ComputerName
-
-Specifies the hostname to query for sessions (also accepts IP addresses).
-Defaults to the localhost.
-
-.PARAMETER Method
-
-The collection method to use, defaults to 'API', also accepts 'WinNT'.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to a remote machine. Only applicable with "-Method WinNT".
-
-.EXAMPLE
-
-Get-NetLocalGroup
-
-ComputerName                  GroupName                     Comment
-------------                  ---------                     -------
-WINDOWS1                      Administrators                Administrators have comple...
-WINDOWS1                      Backup Operators              Backup Operators can overr...
-WINDOWS1                      Cryptographic Operators       Members are authorized to ...
-...
-
-.EXAMPLE
-
-Get-NetLocalGroup -Method Winnt
-
-ComputerName           GroupName              GroupSID              Comment
-------------           ---------              --------              -------
-WINDOWS1               Administrators         S-1-5-32-544          Administrators hav...
-WINDOWS1               Backup Operators       S-1-5-32-551          Backup Operators c...
-WINDOWS1               Cryptographic Opera... S-1-5-32-569          Members are author...
-...
-
-.EXAMPLE
-
-Get-NetLocalGroup -ComputerName primary.testlab.local
-
-ComputerName                  GroupName                     Comment
-------------                  ---------                     -------
-primary.testlab.local         Administrators                Administrators have comple...
-primary.testlab.local         Users                         Users are prevented from m...
-primary.testlab.local         Guests                        Guests have the same acces...
-primary.testlab.local         Print Operators               Members can administer dom...
-primary.testlab.local         Backup Operators              Backup Operators can overr...
-
-.OUTPUTS
-
-PowerView.LocalGroup.API
-
-Custom PSObject with translated group property fields from API results.
-
-PowerView.LocalGroup.WinNT
-
-Custom PSObject with translated group property fields from WinNT results.
-
-.LINK
-
-https://msdn.microsoft.com/en-us/library/windows/desktop/aa370440(v=vs.85).aspx
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [OutputType('PowerView.LocalGroup.API')]
@@ -9453,106 +8607,6 @@ https://msdn.microsoft.com/en-us/library/windows/desktop/aa370440(v=vs.85).aspx
 
 
 function Get-NetLocalGroupMember {
-<#
-.SYNOPSIS
-
-Enumerates members of a specific local group on the local (or remote) machine.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: PSReflect, Convert-ADName  
-
-.DESCRIPTION
-
-This function will enumerate the members of a specified local group  on the
-current, or remote, machine. By default, the Win32 API call NetLocalGroupGetMembers
-will be used (for speed). Specifying "-Method WinNT" causes the WinNT service provider
-to be used instead, which returns a larger amount of information.
-
-.PARAMETER ComputerName
-
-Specifies the hostname to query for sessions (also accepts IP addresses).
-Defaults to the localhost.
-
-.PARAMETER GroupName
-
-The local group name to query for users. If not given, it defaults to "Administrators".
-
-.PARAMETER Method
-
-The collection method to use, defaults to 'API', also accepts 'WinNT'.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to a remote machine. Only applicable with "-Method WinNT".
-
-.EXAMPLE
-
-Get-NetLocalGroupMember | ft
-
-ComputerName   GroupName      MemberName     SID                   IsGroup       IsDomain
-------------   ---------      ----------     ---                   -------       --------
-WINDOWS1       Administrators WINDOWS1\Ad... S-1-5-21-25...          False          False
-WINDOWS1       Administrators WINDOWS1\lo... S-1-5-21-25...          False          False
-WINDOWS1       Administrators TESTLAB\Dom... S-1-5-21-89...           True           True
-WINDOWS1       Administrators TESTLAB\har... S-1-5-21-89...          False           True
-
-.EXAMPLE
-
-Get-NetLocalGroupMember -Method winnt | ft
-
-ComputerName   GroupName      MemberName     SID                   IsGroup       IsDomain
-------------   ---------      ----------     ---                   -------       --------
-WINDOWS1       Administrators WINDOWS1\Ad... S-1-5-21-25...          False          False
-WINDOWS1       Administrators WINDOWS1\lo... S-1-5-21-25...          False          False
-WINDOWS1       Administrators TESTLAB\Dom... S-1-5-21-89...           True           True
-WINDOWS1       Administrators TESTLAB\har... S-1-5-21-89...          False           True
-
-.EXAMPLE
-
-Get-NetLocalGroup | Get-NetLocalGroupMember | ft
-
-ComputerName   GroupName      MemberName     SID                   IsGroup       IsDomain
-------------   ---------      ----------     ---                   -------       --------
-WINDOWS1       Administrators WINDOWS1\Ad... S-1-5-21-25...          False          False
-WINDOWS1       Administrators WINDOWS1\lo... S-1-5-21-25...          False          False
-WINDOWS1       Administrators TESTLAB\Dom... S-1-5-21-89...           True           True
-WINDOWS1       Administrators TESTLAB\har... S-1-5-21-89...          False           True
-WINDOWS1       Guests         WINDOWS1\Guest S-1-5-21-25...          False          False
-WINDOWS1       IIS_IUSRS      NT AUTHORIT... S-1-5-17                False          False
-WINDOWS1       Users          NT AUTHORIT... S-1-5-4                 False          False
-WINDOWS1       Users          NT AUTHORIT... S-1-5-11                False          False
-WINDOWS1       Users          WINDOWS1\lo... S-1-5-21-25...          False        UNKNOWN
-WINDOWS1       Users          TESTLAB\Dom... S-1-5-21-89...           True        UNKNOWN
-
-.EXAMPLE
-
-Get-NetLocalGroupMember -ComputerName primary.testlab.local | ft
-
-ComputerName   GroupName      MemberName     SID                   IsGroup       IsDomain
-------------   ---------      ----------     ---                   -------       --------
-primary.tes... Administrators TESTLAB\Adm... S-1-5-21-89...          False          False
-primary.tes... Administrators TESTLAB\loc... S-1-5-21-89...          False          False
-primary.tes... Administrators TESTLAB\Ent... S-1-5-21-89...           True          False
-primary.tes... Administrators TESTLAB\Dom... S-1-5-21-89...           True          False
-
-.OUTPUTS
-
-PowerView.LocalGroupMember.API
-
-Custom PSObject with translated group property fields from API results.
-
-PowerView.LocalGroupMember.WinNT
-
-Custom PSObject with translated group property fields from WinNT results.
-
-.LINK
-
-http://stackoverflow.com/questions/21288220/get-all-local-members-and-groups-displayed-together
-http://msdn.microsoft.com/en-us/library/aa772211(VS.85).aspx
-https://msdn.microsoft.com/en-us/library/windows/desktop/aa370601(v=vs.85).aspx
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [OutputType('PowerView.LocalGroupMember.API')]
@@ -9770,65 +8824,6 @@ https://msdn.microsoft.com/en-us/library/windows/desktop/aa370601(v=vs.85).aspx
 
 
 function Get-NetShare {
-<#
-.SYNOPSIS
-
-Returns open shares on the local (or a remote) machine.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: PSReflect, Invoke-UserImpersonation, Invoke-RevertToSelf  
-
-.DESCRIPTION
-
-This function will execute the NetShareEnum Win32API call to query
-a given host for open shares. This is a replacement for "net share \\hostname".
-
-.PARAMETER ComputerName
-
-Specifies the hostname to query for shares (also accepts IP addresses).
-Defaults to 'localhost'.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the remote system using Invoke-UserImpersonation.
-
-.EXAMPLE
-
-Get-NetShare
-
-Returns active shares on the local host.
-
-.EXAMPLE
-
-Get-NetShare -ComputerName sqlserver
-
-Returns active shares on the 'sqlserver' host
-
-.EXAMPLE
-
-Get-DomainComputer | Get-NetShare
-
-Returns all shares for all computers in the domain.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Get-NetShare -ComputerName sqlserver -Credential $Cred
-
-.OUTPUTS
-
-PowerView.ShareInfo
-
-A PSCustomObject representing a SHARE_INFO_1 structure, including
-the name/type/remark for each share, with the ComputerName added.
-
-.LINK
-
-http://www.powershellmagazine.com/2014/09/25/easily-defining-enums-structs-and-win32-functions-in-memory/
-#>
 
     [OutputType('PowerView.ShareInfo')]
     [CmdletBinding()]
@@ -9904,66 +8899,6 @@ http://www.powershellmagazine.com/2014/09/25/easily-defining-enums-structs-and-w
 
 
 function Get-NetLoggedon {
-<#
-.SYNOPSIS
-
-Returns users logged on the local (or a remote) machine.
-Note: administrative rights needed for newer Windows OSes.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: PSReflect, Invoke-UserImpersonation, Invoke-RevertToSelf  
-
-.DESCRIPTION
-
-This function will execute the NetWkstaUserEnum Win32API call to query
-a given host for actively logged on users.
-
-.PARAMETER ComputerName
-
-Specifies the hostname to query for logged on users (also accepts IP addresses).
-Defaults to 'localhost'.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the remote system using Invoke-UserImpersonation.
-
-.EXAMPLE
-
-Get-NetLoggedon
-
-Returns users actively logged onto the local host.
-
-.EXAMPLE
-
-Get-NetLoggedon -ComputerName sqlserver
-
-Returns users actively logged onto the 'sqlserver' host.
-
-.EXAMPLE
-
-Get-DomainComputer | Get-NetLoggedon
-
-Returns all logged on users for all computers in the domain.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Get-NetLoggedon -ComputerName sqlserver -Credential $Cred
-
-.OUTPUTS
-
-PowerView.LoggedOnUserInfo
-
-A PSCustomObject representing a WKSTA_USER_INFO_1 structure, including
-the UserName/LogonDomain/AuthDomains/LogonServer for each user, with the ComputerName added.
-
-.LINK
-
-http://www.powershellmagazine.com/2014/09/25/easily-defining-enums-structs-and-win32-functions-in-memory/
-#>
 
     [OutputType('PowerView.LoggedOnUserInfo')]
     [CmdletBinding()]
@@ -10039,65 +8974,6 @@ http://www.powershellmagazine.com/2014/09/25/easily-defining-enums-structs-and-w
 
 
 function Get-NetSession {
-<#
-.SYNOPSIS
-
-Returns session information for the local (or a remote) machine.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: PSReflect, Invoke-UserImpersonation, Invoke-RevertToSelf  
-
-.DESCRIPTION
-
-This function will execute the NetSessionEnum Win32API call to query
-a given host for active sessions.
-
-.PARAMETER ComputerName
-
-Specifies the hostname to query for sessions (also accepts IP addresses).
-Defaults to 'localhost'.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the remote system using Invoke-UserImpersonation.
-
-.EXAMPLE
-
-Get-NetSession
-
-Returns active sessions on the local host.
-
-.EXAMPLE
-
-Get-NetSession -ComputerName sqlserver
-
-Returns active sessions on the 'sqlserver' host.
-
-.EXAMPLE
-
-Get-DomainController | Get-NetSession
-
-Returns active sessions on all domain controllers.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Get-NetSession -ComputerName sqlserver -Credential $Cred
-
-.OUTPUTS
-
-PowerView.SessionInfo
-
-A PSCustomObject representing a WKSTA_USER_INFO_1 structure, including
-the CName/UserName/Time/IdleTime for each session, with the ComputerName added.
-
-.LINK
-
-http://www.powershellmagazine.com/2014/09/25/easily-defining-enums-structs-and-win32-functions-in-memory/
-#>
 
     [OutputType('PowerView.SessionInfo')]
     [CmdletBinding()]
@@ -10174,68 +9050,6 @@ http://www.powershellmagazine.com/2014/09/25/easily-defining-enums-structs-and-w
 
 
 function Get-RegLoggedOn {
-<#
-.SYNOPSIS
-
-Returns who is logged onto the local (or a remote) machine
-through enumeration of remote registry keys.
-
-Note: This function requires only domain user rights on the
-machine you're enumerating, but remote registry must be enabled.
-
-Author: Matt Kelly (@BreakersAll)  
-License: BSD 3-Clause  
-Required Dependencies: Invoke-UserImpersonation, Invoke-RevertToSelf, ConvertFrom-SID  
-
-.DESCRIPTION
-
-This function will query the HKU registry values to retrieve the local
-logged on users SID and then attempt and reverse it.
-Adapted technique from Sysinternal's PSLoggedOn script. Benefit over
-using the NetWkstaUserEnum API (Get-NetLoggedon) of less user privileges
-required (NetWkstaUserEnum requires remote admin access).
-
-.PARAMETER ComputerName
-
-Specifies the hostname to query for remote registry values (also accepts IP addresses).
-Defaults to 'localhost'.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the remote system using Invoke-UserImpersonation.
-
-.EXAMPLE
-
-Get-RegLoggedOn
-
-Returns users actively logged onto the local host.
-
-.EXAMPLE
-
-Get-RegLoggedOn -ComputerName sqlserver
-
-Returns users actively logged onto the 'sqlserver' host.
-
-.EXAMPLE
-
-Get-DomainController | Get-RegLoggedOn
-
-Returns users actively logged on all domain controllers.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Get-RegLoggedOn -ComputerName sqlserver -Credential $Cred
-
-.OUTPUTS
-
-PowerView.RegLoggedOnUser
-
-A PSCustomObject including the UserDomain/UserName/UserSID of each
-actively logged on user, with the ComputerName added.
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [OutputType('PowerView.RegLoggedOnUser')]
@@ -10296,69 +9110,6 @@ actively logged on user, with the ComputerName added.
 
 
 function Get-NetRDPSession {
-<#
-.SYNOPSIS
-
-Returns remote desktop/session information for the local (or a remote) machine.
-
-Note: only members of the Administrators or Account Operators local group
-can successfully execute this functionality on a remote target.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: PSReflect, Invoke-UserImpersonation, Invoke-RevertToSelf  
-
-.DESCRIPTION
-
-This function will execute the WTSEnumerateSessionsEx and WTSQuerySessionInformation
-Win32API calls to query a given RDP remote service for active sessions and originating
-IPs. This is a replacement for qwinsta.
-
-.PARAMETER ComputerName
-
-Specifies the hostname to query for active sessions (also accepts IP addresses).
-Defaults to 'localhost'.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the remote system using Invoke-UserImpersonation.
-
-.EXAMPLE
-
-Get-NetRDPSession
-
-Returns active RDP/terminal sessions on the local host.
-
-.EXAMPLE
-
-Get-NetRDPSession -ComputerName "sqlserver"
-
-Returns active RDP/terminal sessions on the 'sqlserver' host.
-
-.EXAMPLE
-
-Get-DomainController | Get-NetRDPSession
-
-Returns active RDP/terminal sessions on all domain controllers.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Get-NetRDPSession -ComputerName sqlserver -Credential $Cred
-
-.OUTPUTS
-
-PowerView.RDPSessionInfo
-
-A PSCustomObject representing a combined WTS_SESSION_INFO_1 and WTS_CLIENT_ADDRESS structure,
-with the ComputerName added.
-
-.LINK
-
-https://msdn.microsoft.com/en-us/library/aa383861(v=vs.85).aspx
-#>
 
     [OutputType('PowerView.RDPSessionInfo')]
     [CmdletBinding()]
@@ -10491,66 +9242,6 @@ https://msdn.microsoft.com/en-us/library/aa383861(v=vs.85).aspx
 
 
 function Test-AdminAccess {
-<#
-.SYNOPSIS
-
-Tests if the current user has administrative access to the local (or a remote) machine.
-
-Idea stolen from the local_admin_search_enum post module in Metasploit written by:  
-    'Brandon McCann "zeknox" <bmccann[at]accuvant.com>'  
-    'Thomas McCarthy "smilingraccoon" <smilingraccoon[at]gmail.com>'  
-    'Royce Davis "r3dy" <rdavis[at]accuvant.com>'  
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: PSReflect, Invoke-UserImpersonation, Invoke-RevertToSelf  
-
-.DESCRIPTION
-
-This function will use the OpenSCManagerW Win32API call to establish
-a handle to the remote host. If this succeeds, the current user context
-has local administrator acess to the target.
-
-.PARAMETER ComputerName
-
-Specifies the hostname to check for local admin access (also accepts IP addresses).
-Defaults to 'localhost'.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the remote system using Invoke-UserImpersonation.
-
-.EXAMPLE
-
-Test-AdminAccess -ComputerName sqlserver
-
-Returns results indicating whether the current user has admin access to the 'sqlserver' host.
-
-.EXAMPLE
-
-Get-DomainComputer | Test-AdminAccess
-
-Returns what machines in the domain the current user has access to.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Test-AdminAccess -ComputerName sqlserver -Credential $Cred
-
-.OUTPUTS
-
-PowerView.AdminAccess
-
-A PSCustomObject containing the ComputerName and 'IsAdmin' set to whether
-the current user has local admin rights, along with the ComputerName added.
-
-.LINK
-
-https://github.com/rapid7/metasploit-framework/blob/master/modules/post/windows/gather/local_admin_search_enum.rb
-http://www.powershellmagazine.com/2014/09/25/easily-defining-enums-structs-and-win32-functions-in-memory/
-#>
 
     [OutputType('PowerView.AdminAccess')]
     [CmdletBinding()]
@@ -10604,54 +9295,6 @@ http://www.powershellmagazine.com/2014/09/25/easily-defining-enums-structs-and-w
 
 
 function Get-NetComputerSiteName {
-<#
-.SYNOPSIS
-
-Returns the AD site where the local (or a remote) machine resides.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: PSReflect, Invoke-UserImpersonation, Invoke-RevertToSelf  
-
-.DESCRIPTION
-
-This function will use the DsGetSiteName Win32API call to look up the
-name of the site where a specified computer resides.
-
-.PARAMETER ComputerName
-
-Specifies the hostname to check the site for (also accepts IP addresses).
-Defaults to 'localhost'.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the remote system using Invoke-UserImpersonation.
-
-.EXAMPLE
-
-Get-NetComputerSiteName -ComputerName WINDOWS1.testlab.local
-
-Returns the site for WINDOWS1.testlab.local.
-
-.EXAMPLE
-
-Get-DomainComputer | Get-NetComputerSiteName
-
-Returns the sites for every machine in AD.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Get-NetComputerSiteName -ComputerName WINDOWS1.testlab.local -Credential $Cred
-
-.OUTPUTS
-
-PowerView.ComputerSite
-
-A PSCustomObject containing the ComputerName, IPAddress, and associated Site name.
-#>
 
     [OutputType('PowerView.ComputerSite')]
     [CmdletBinding()]
@@ -10718,60 +9361,6 @@ A PSCustomObject containing the ComputerName, IPAddress, and associated Site nam
 
 
 function Get-WMIRegProxy {
-<#
-.SYNOPSIS
-
-Enumerates the proxy server and WPAD conents for the current user.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: None  
-
-.DESCRIPTION
-
-Enumerates the proxy server and WPAD specification for the current user
-on the local machine (default), or a machine specified with -ComputerName.
-It does this by enumerating settings from
-HKU:SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings.
-
-.PARAMETER ComputerName
-
-Specifies the system to enumerate proxy settings on. Defaults to the local host.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connecting to the remote system.
-
-.EXAMPLE
-
-Get-WMIRegProxy
-
-ComputerName           ProxyServer            AutoConfigURL         Wpad
-------------           -----------            -------------         ----
-WINDOWS1               http://primary.test...
-
-.EXAMPLE
-
-$Cred = Get-Credential "TESTLAB\administrator"
-Get-WMIRegProxy -Credential $Cred -ComputerName primary.testlab.local
-
-ComputerName            ProxyServer            AutoConfigURL         Wpad
-------------            -----------            -------------         ----
-windows1.testlab.local  primary.testlab.local
-
-.INPUTS
-
-String
-
-Accepts one or more computer name specification strings  on the pipeline (netbios or FQDN).
-
-.OUTPUTS
-
-PowerView.ProxySettings
-
-Outputs custom PSObjects with the ComputerName, ProxyServer, AutoConfigURL, and WPAD contents.
-#>
 
     [OutputType('PowerView.ProxySettings')]
     [CmdletBinding()]
@@ -10839,62 +9428,6 @@ Outputs custom PSObjects with the ComputerName, ProxyServer, AutoConfigURL, and 
 
 
 function Get-WMIRegLastLoggedOn {
-<#
-.SYNOPSIS
-
-Returns the last user who logged onto the local (or a remote) machine.
-
-Note: This function requires administrative rights on the machine you're enumerating.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: None  
-
-.DESCRIPTION
-
-This function uses remote registry to enumerate the LastLoggedOnUser registry key
-for the local (or remote) machine.
-
-.PARAMETER ComputerName
-
-Specifies the hostname to query for remote registry values (also accepts IP addresses).
-Defaults to 'localhost'.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connecting to the remote system.
-
-.EXAMPLE
-
-Get-WMIRegLastLoggedOn
-
-Returns the last user logged onto the local machine.
-
-.EXAMPLE
-
-Get-WMIRegLastLoggedOn -ComputerName WINDOWS1
-
-Returns the last user logged onto WINDOWS1
-
-.EXAMPLE
-
-Get-DomainComputer | Get-WMIRegLastLoggedOn
-
-Returns the last user logged onto all machines in the domain.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Get-WMIRegLastLoggedOn -ComputerName PRIMARY.testlab.local -Credential $Cred
-
-.OUTPUTS
-
-PowerView.LastLoggedOnUser
-
-A PSCustomObject containing the ComputerName and last loggedon user.
-#>
 
     [OutputType('PowerView.LastLoggedOnUser')]
     [CmdletBinding()]
@@ -10947,63 +9480,6 @@ A PSCustomObject containing the ComputerName and last loggedon user.
 
 
 function Get-WMIRegCachedRDPConnection {
-<#
-.SYNOPSIS
-
-Returns information about RDP connections outgoing from the local (or remote) machine.
-
-Note: This function requires administrative rights on the machine you're enumerating.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: ConvertFrom-SID  
-
-.DESCRIPTION
-
-Uses remote registry functionality to query all entries for the
-"Windows Remote Desktop Connection Client" on a machine, separated by
-user and target server.
-
-.PARAMETER ComputerName
-
-Specifies the hostname to query for cached RDP connections (also accepts IP addresses).
-Defaults to 'localhost'.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connecting to the remote system.
-
-.EXAMPLE
-
-Get-WMIRegCachedRDPConnection
-
-Returns the RDP connection client information for the local machine.
-
-.EXAMPLE
-
-Get-WMIRegCachedRDPConnection  -ComputerName WINDOWS2.testlab.local
-
-Returns the RDP connection client information for the WINDOWS2.testlab.local machine
-
-.EXAMPLE
-
-Get-DomainComputer | Get-WMIRegCachedRDPConnection
-
-Returns cached RDP information for all machines in the domain.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Get-WMIRegCachedRDPConnection -ComputerName PRIMARY.testlab.local -Credential $Cred
-
-.OUTPUTS
-
-PowerView.CachedRDPConnection
-
-A PSCustomObject containing the ComputerName and cached RDP information.
-#>
 
     [OutputType('PowerView.CachedRDPConnection')]
     [CmdletBinding()]
@@ -11098,61 +9574,6 @@ A PSCustomObject containing the ComputerName and cached RDP information.
 
 
 function Get-WMIRegMountedDrive {
-<#
-.SYNOPSIS
-
-Returns information about saved network mounted drives for the local (or remote) machine.
-
-Note: This function requires administrative rights on the machine you're enumerating.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: ConvertFrom-SID  
-
-.DESCRIPTION
-
-Uses remote registry functionality to enumerate recently mounted network drives.
-
-.PARAMETER ComputerName
-
-Specifies the hostname to query for mounted drive information (also accepts IP addresses).
-Defaults to 'localhost'.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connecting to the remote system.
-
-.EXAMPLE
-
-Get-WMIRegMountedDrive
-
-Returns the saved network mounted drives for the local machine.
-
-.EXAMPLE
-
-Get-WMIRegMountedDrive -ComputerName WINDOWS2.testlab.local
-
-Returns the saved network mounted drives for the WINDOWS2.testlab.local machine
-
-.EXAMPLE
-
-Get-DomainComputer | Get-WMIRegMountedDrive
-
-Returns the saved network mounted drives for all machines in the domain.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Get-WMIRegMountedDrive -ComputerName PRIMARY.testlab.local -Credential $Cred
-
-.OUTPUTS
-
-PowerView.RegMountedDrive
-
-A PSCustomObject containing the ComputerName and mounted drive information.
-#>
 
     [OutputType('PowerView.RegMountedDrive')]
     [CmdletBinding()]
@@ -11233,46 +9654,6 @@ A PSCustomObject containing the ComputerName and mounted drive information.
 
 
 function Get-WMIProcess {
-<#
-.SYNOPSIS
-
-Returns a list of processes and their owners on the local or remote machine.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: None  
-
-.DESCRIPTION
-
-Uses Get-WMIObject to enumerate all Win32_process instances on the local or remote machine,
-including the owners of the particular process.
-
-.PARAMETER ComputerName
-
-Specifies the hostname to query for cached RDP connections (also accepts IP addresses).
-Defaults to 'localhost'.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the remote system.
-
-.EXAMPLE
-
-Get-WMIProcess -ComputerName WINDOWS1
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Get-WMIProcess -ComputerName PRIMARY.testlab.local -Credential $Cred
-
-.OUTPUTS
-
-PowerView.UserProcess
-
-A PSCustomObject containing the remote process information.
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [OutputType('PowerView.UserProcess')]
@@ -11318,93 +9699,6 @@ A PSCustomObject containing the remote process information.
 
 
 function Find-InterestingFile {
-<#
-.SYNOPSIS
-
-Searches for files on the given path that match a series of specified criteria.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: Add-RemoteConnection, Remove-RemoteConnection  
-
-.DESCRIPTION
-
-This function recursively searches a given UNC path for files with
-specific keywords in the name (default of pass, sensitive, secret, admin,
-login and unattend*.xml). By default, hidden files/folders are included
-in search results. If -Credential is passed, Add-RemoteConnection/Remove-RemoteConnection
-is used to temporarily map the remote share.
-
-.PARAMETER Path
-
-UNC/local path to recursively search.
-
-.PARAMETER Include
-
-Only return files/folders that match the specified array of strings,
-i.e. @(*.doc*, *.xls*, *.ppt*)
-
-.PARAMETER LastAccessTime
-
-Only return files with a LastAccessTime greater than this date value.
-
-.PARAMETER LastWriteTime
-
-Only return files with a LastWriteTime greater than this date value.
-
-.PARAMETER CreationTime
-
-Only return files with a CreationTime greater than this date value.
-
-.PARAMETER OfficeDocs
-
-Switch. Search for office documents (*.doc*, *.xls*, *.ppt*)
-
-.PARAMETER FreshEXEs
-
-Switch. Find .EXEs accessed within the last 7 days.
-
-.PARAMETER ExcludeFolders
-
-Switch. Exclude folders from the search results.
-
-.PARAMETER ExcludeHidden
-
-Switch. Exclude hidden files and folders from the search results.
-
-.PARAMETER CheckWriteAccess
-
-Switch. Only returns files the current user has write access to.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-to connect to remote systems for file enumeration.
-
-.EXAMPLE
-
-Find-InterestingFile -Path "C:\Backup\"
-
-Returns any files on the local path C:\Backup\ that have the default
-search term set in the title.
-
-.EXAMPLE
-
-Find-InterestingFile -Path "\\WINDOWS7\Users\" -LastAccessTime (Get-Date).AddDays(-7)
-
-Returns any files on the remote path \\WINDOWS7\Users\ that have the default
-search term set in the title and were accessed within the last week.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Find-InterestingFile -Credential $Cred -Path "\\PRIMARY.testlab.local\C$\Temp\"
-
-.OUTPUTS
-
-PowerView.FoundFile
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [OutputType('PowerView.FoundFile')]
@@ -11547,11 +9841,11 @@ PowerView.FoundFile
 }
 
 
-########################################################
-#
-# 'Meta'-functions start below
-#
-########################################################
+
+
+
+
+
 
 function New-ThreadedFunction {
     # Helper used by any threaded host enumeration functions
@@ -11709,189 +10003,6 @@ function New-ThreadedFunction {
 
 
 function Find-DomainUserLocation {
-<#
-.SYNOPSIS
-
-Finds domain machines where specific users are logged into.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: Get-DomainFileServer, Get-DomainDFSShare, Get-DomainController, Get-DomainComputer, Get-DomainUser, Get-DomainGroupMember, Invoke-UserImpersonation, Invoke-RevertToSelf, Get-NetSession, Test-AdminAccess, Get-NetLoggedon, Resolve-IPAddress, New-ThreadedFunction  
-
-.DESCRIPTION
-
-This function enumerates all machines on the current (or specified) domain
-using Get-DomainComputer, and queries the domain for users of a specified group
-(default 'Domain Admins') with Get-DomainGroupMember. Then for each server the
-function enumerates any active user sessions with Get-NetSession/Get-NetLoggedon
-The found user list is compared against the target list, and any matches are
-displayed. If -ShowAll is specified, all results are displayed instead of
-the filtered set. If -Stealth is specified, then likely highly-trafficed servers
-are enumerated with Get-DomainFileServer/Get-DomainController, and session
-enumeration is executed only against those servers. If -Credential is passed,
-then Invoke-UserImpersonation is used to impersonate the specified user
-before enumeration, reverting after with Invoke-RevertToSelf.
-
-.PARAMETER ComputerName
-
-Specifies an array of one or more hosts to enumerate, passable on the pipeline.
-If -ComputerName is not passed, the default behavior is to enumerate all machines
-in the domain returned by Get-DomainComputer.
-
-.PARAMETER Domain
-
-Specifies the domain to query for computers AND users, defaults to the current domain.
-
-.PARAMETER ComputerDomain
-
-Specifies the domain to query for computers, defaults to the current domain.
-
-.PARAMETER ComputerLDAPFilter
-
-Specifies an LDAP query string that is used to search for computer objects.
-
-.PARAMETER ComputerSearchBase
-
-Specifies the LDAP source to search through for computers,
-e.g. "LDAP://OU=secret,DC=testlab,DC=local". Useful for OU queries.
-
-.PARAMETER ComputerUnconstrained
-
-Switch. Search computer objects that have unconstrained delegation.
-
-.PARAMETER ComputerOperatingSystem
-
-Search computers with a specific operating system, wildcards accepted.
-
-.PARAMETER ComputerServicePack
-
-Search computers with a specific service pack, wildcards accepted.
-
-.PARAMETER ComputerSiteName
-
-Search computers in the specific AD Site name, wildcards accepted.
-
-.PARAMETER UserIdentity
-
-Specifies one or more user identities to search for.
-
-.PARAMETER UserDomain
-
-Specifies the domain to query for users to search for, defaults to the current domain.
-
-.PARAMETER UserLDAPFilter
-
-Specifies an LDAP query string that is used to search for target users.
-
-.PARAMETER UserSearchBase
-
-Specifies the LDAP source to search through for target users.
-e.g. "LDAP://OU=secret,DC=testlab,DC=local". Useful for OU queries.
-
-.PARAMETER UserGroupIdentity
-
-Specifies a group identity to query for target users, defaults to 'Domain Admins.
-If any other user specifications are set, then UserGroupIdentity is ignored.
-
-.PARAMETER UserAdminCount
-
-Switch. Search for users users with '(adminCount=1)' (meaning are/were privileged).
-
-.PARAMETER UserAllowDelegation
-
-Switch. Search for user accounts that are not marked as 'sensitive and not allowed for delegation'.
-
-.PARAMETER CheckAccess
-
-Switch. Check if the current user has local admin access to computers where target users are found.
-
-.PARAMETER Server
-
-Specifies an Active Directory server (domain controller) to bind to.
-
-.PARAMETER SearchScope
-
-Specifies the scope to search under for computers, Base/OneLevel/Subtree (default of Subtree).
-
-.PARAMETER ResultPageSize
-
-Specifies the PageSize to set for the LDAP searcher object.
-
-.PARAMETER ServerTimeLimit
-
-Specifies the maximum amount of time the server spends searching. Default of 120 seconds.
-
-.PARAMETER Tombstone
-
-Switch. Specifies that the searcher should also return deleted/tombstoned objects.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the target domain and target systems.
-
-.PARAMETER StopOnSuccess
-
-Switch. Stop hunting after finding after finding a target user.
-
-.PARAMETER Delay
-
-Specifies the delay (in seconds) between enumerating hosts, defaults to 0.
-
-.PARAMETER Jitter
-
-Specifies the jitter (0-1.0) to apply to any specified -Delay, defaults to +/- 0.3
-
-.PARAMETER ShowAll
-
-Switch. Return all user location results instead of filtering based on target
-specifications.
-
-.PARAMETER Stealth
-
-Switch. Only enumerate sessions from connonly used target servers.
-
-.PARAMETER StealthSource
-
-The source of target servers to use, 'DFS' (distributed file servers),
-'DC' (domain controllers), 'File' (file servers), or 'All' (the default).
-
-.PARAMETER Threads
-
-The number of threads to use for user searching, defaults to 20.
-
-.EXAMPLE
-
-Find-DomainUserLocation
-
-Searches for 'Domain Admins' by enumerating every computer in the domain.
-
-.EXAMPLE
-
-Find-DomainUserLocation -Stealth -ShowAll
-
-Enumerates likely highly-trafficked servers, performs just session enumeration
-against each, and outputs all results.
-
-.EXAMPLE
-
-Find-DomainUserLocation -UserAdminCount -ComputerOperatingSystem 'Windows 7*' -Domain dev.testlab.local
-
-Enumerates Windows 7 computers in dev.testlab.local and returns user results for privileged
-users in dev.testlab.local.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Find-DomainUserLocation -Domain testlab.local -Credential $Cred
-
-Searches for domain admin locations in the testlab.local using the specified alternate credentials.
-
-.OUTPUTS
-
-PowerView.UserLocation
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [OutputType('PowerView.UserLocation')]
@@ -12307,169 +10418,6 @@ PowerView.UserLocation
 
 
 function Find-DomainProcess {
-<#
-.SYNOPSIS
-
-Searches for processes on the domain using WMI, returning processes
-that match a particular user specification or process name.
-
-Thanks to @paulbrandau for the approach idea.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: Get-DomainComputer, Get-DomainUser, Get-DomainGroupMember, Get-WMIProcess, New-ThreadedFunction  
-
-.DESCRIPTION
-
-This function enumerates all machines on the current (or specified) domain
-using Get-DomainComputer, and queries the domain for users of a specified group
-(default 'Domain Admins') with Get-DomainGroupMember. Then for each server the
-function enumerates any current processes running with Get-WMIProcess,
-searching for processes running under any target user contexts or with the
-specified -ProcessName. If -Credential is passed, it is passed through to
-the underlying WMI commands used to enumerate the remote machines.
-
-.PARAMETER ComputerName
-
-Specifies an array of one or more hosts to enumerate, passable on the pipeline.
-If -ComputerName is not passed, the default behavior is to enumerate all machines
-in the domain returned by Get-DomainComputer.
-
-.PARAMETER Domain
-
-Specifies the domain to query for computers AND users, defaults to the current domain.
-
-.PARAMETER ComputerDomain
-
-Specifies the domain to query for computers, defaults to the current domain.
-
-.PARAMETER ComputerLDAPFilter
-
-Specifies an LDAP query string that is used to search for computer objects.
-
-.PARAMETER ComputerSearchBase
-
-Specifies the LDAP source to search through for computers,
-e.g. "LDAP://OU=secret,DC=testlab,DC=local". Useful for OU queries.
-
-.PARAMETER ComputerUnconstrained
-
-Switch. Search computer objects that have unconstrained delegation.
-
-.PARAMETER ComputerOperatingSystem
-
-Search computers with a specific operating system, wildcards accepted.
-
-.PARAMETER ComputerServicePack
-
-Search computers with a specific service pack, wildcards accepted.
-
-.PARAMETER ComputerSiteName
-
-Search computers in the specific AD Site name, wildcards accepted.
-
-.PARAMETER ProcessName
-
-Search for processes with one or more specific names.
-
-.PARAMETER UserIdentity
-
-Specifies one or more user identities to search for.
-
-.PARAMETER UserDomain
-
-Specifies the domain to query for users to search for, defaults to the current domain.
-
-.PARAMETER UserLDAPFilter
-
-Specifies an LDAP query string that is used to search for target users.
-
-.PARAMETER UserSearchBase
-
-Specifies the LDAP source to search through for target users.
-e.g. "LDAP://OU=secret,DC=testlab,DC=local". Useful for OU queries.
-
-.PARAMETER UserGroupIdentity
-
-Specifies a group identity to query for target users, defaults to 'Domain Admins.
-If any other user specifications are set, then UserGroupIdentity is ignored.
-
-.PARAMETER UserAdminCount
-
-Switch. Search for users users with '(adminCount=1)' (meaning are/were privileged).
-
-.PARAMETER Server
-
-Specifies an Active Directory server (domain controller) to bind to.
-
-.PARAMETER SearchScope
-
-Specifies the scope to search under for computers, Base/OneLevel/Subtree (default of Subtree).
-
-.PARAMETER ResultPageSize
-
-Specifies the PageSize to set for the LDAP searcher object.
-
-.PARAMETER ServerTimeLimit
-
-Specifies the maximum amount of time the server spends searching. Default of 120 seconds.
-
-.PARAMETER Tombstone
-
-Switch. Specifies that the searcher should also return deleted/tombstoned objects.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the target domain and target systems.
-
-.PARAMETER StopOnSuccess
-
-Switch. Stop hunting after finding after finding a target user.
-
-.PARAMETER Delay
-
-Specifies the delay (in seconds) between enumerating hosts, defaults to 0.
-
-.PARAMETER Jitter
-
-Specifies the jitter (0-1.0) to apply to any specified -Delay, defaults to +/- 0.3
-
-.PARAMETER Threads
-
-The number of threads to use for user searching, defaults to 20.
-
-.EXAMPLE
-
-Find-DomainProcess
-
-Searches for processes run by 'Domain Admins' by enumerating every computer in the domain.
-
-.EXAMPLE
-
-Find-DomainProcess -UserAdminCount -ComputerOperatingSystem 'Windows 7*' -Domain dev.testlab.local
-
-Enumerates Windows 7 computers in dev.testlab.local and returns any processes being run by
-privileged users in dev.testlab.local.
-
-.EXAMPLE
-
-Find-DomainProcess -ProcessName putty.exe
-
-Searchings for instances of putty.exe running on the current domain.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Find-DomainProcess -Domain testlab.local -Credential $Cred
-
-Searches processes being run by 'domain admins' in the testlab.local using the specified alternate credentials.
-
-.OUTPUTS
-
-PowerView.UserProcess
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUsePSCredentialType', '')]
@@ -12747,159 +10695,6 @@ PowerView.UserProcess
 
 
 function Find-DomainUserEvent {
-<#
-.SYNOPSIS
-
-Finds logon events on the current (or remote domain) for the specified users.
-
-Author: Lee Christensen (@tifkin_), Justin Warner (@sixdub), Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: Get-DomainUser, Get-DomainGroupMember, Get-DomainController, Get-DomainUserEvent, New-ThreadedFunction  
-
-.DESCRIPTION
-
-Enumerates all domain controllers from the specified -Domain
-(default of the local domain) using Get-DomainController, enumerates
-the logon events for each using Get-DomainUserEvent, and filters
-the results based on the targeting criteria.
-
-.PARAMETER ComputerName
-
-Specifies an explicit computer name to retrieve events from.
-
-.PARAMETER Domain
-
-Specifies a domain to query for domain controllers to enumerate.
-Defaults to the current domain.
-
-.PARAMETER Filter
-
-A hashtable of PowerView.LogonEvent properties to filter for.
-The 'op|operator|operation' clause can have '&', '|', 'and', or 'or',
-and is 'or' by default, meaning at least one clause matches instead of all.
-See the exaples for usage.
-
-.PARAMETER StartTime
-
-The [DateTime] object representing the start of when to collect events.
-Default of [DateTime]::Now.AddDays(-1).
-
-.PARAMETER EndTime
-
-The [DateTime] object representing the end of when to collect events.
-Default of [DateTime]::Now.
-
-.PARAMETER MaxEvents
-
-The maximum number of events (per host) to retrieve. Default of 5000.
-
-.PARAMETER UserIdentity
-
-Specifies one or more user identities to search for.
-
-.PARAMETER UserDomain
-
-Specifies the domain to query for users to search for, defaults to the current domain.
-
-.PARAMETER UserLDAPFilter
-
-Specifies an LDAP query string that is used to search for target users.
-
-.PARAMETER UserSearchBase
-
-Specifies the LDAP source to search through for target users.
-e.g. "LDAP://OU=secret,DC=testlab,DC=local". Useful for OU queries.
-
-.PARAMETER UserGroupIdentity
-
-Specifies a group identity to query for target users, defaults to 'Domain Admins.
-If any other user specifications are set, then UserGroupIdentity is ignored.
-
-.PARAMETER UserAdminCount
-
-Switch. Search for users users with '(adminCount=1)' (meaning are/were privileged).
-
-.PARAMETER Server
-
-Specifies an Active Directory server (domain controller) to bind to.
-
-.PARAMETER SearchScope
-
-Specifies the scope to search under for computers, Base/OneLevel/Subtree (default of Subtree).
-
-.PARAMETER ResultPageSize
-
-Specifies the PageSize to set for the LDAP searcher object.
-
-.PARAMETER ServerTimeLimit
-
-Specifies the maximum amount of time the server spends searching. Default of 120 seconds.
-
-.PARAMETER Tombstone
-
-Switch. Specifies that the searcher should also return deleted/tombstoned objects.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the target computer(s).
-
-.PARAMETER StopOnSuccess
-
-Switch. Stop hunting after finding after finding a target user.
-
-.PARAMETER Delay
-
-Specifies the delay (in seconds) between enumerating hosts, defaults to 0.
-
-.PARAMETER Jitter
-
-Specifies the jitter (0-1.0) to apply to any specified -Delay, defaults to +/- 0.3
-
-.PARAMETER Threads
-
-The number of threads to use for user searching, defaults to 20.
-
-.EXAMPLE
-
-Find-DomainUserEvent
-
-Search for any user events matching domain admins on every DC in the current domain.
-
-.EXAMPLE
-
-$cred = Get-Credential dev\administrator
-Find-DomainUserEvent -ComputerName 'secondary.dev.testlab.local' -UserIdentity 'john'
-
-Search for any user events matching the user 'john' on the 'secondary.dev.testlab.local'
-domain controller using the alternate credential
-
-.EXAMPLE
-
-'primary.testlab.local | Find-DomainUserEvent -Filter @{'IpAddress'='192.168.52.200|192.168.52.201'}
-
-Find user events on the primary.testlab.local system where the event matches
-the IPAddress '192.168.52.200' or '192.168.52.201'.
-
-.EXAMPLE
-
-$cred = Get-Credential testlab\administrator
-Find-DomainUserEvent -Delay 1 -Filter @{'LogonGuid'='b8458aa9-b36e-eaa1-96e0-4551000fdb19'; 'TargetLogonId' = '10238128'; 'op'='&'}
-
-Find user events mathing the specified GUID AND the specified TargetLogonId, searching
-through every domain controller in the current domain, enumerating each DC in serial
-instead of in a threaded manner, using the alternate credential.
-
-.OUTPUTS
-
-PowerView.LogonEvent
-
-PowerView.ExplicitCredentialLogon
-
-.LINK
-
-http://www.sixdub.net/2014/11/07/offensive-event-parsing-bringing-home-trophies/
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', '')]
@@ -13169,123 +10964,6 @@ http://www.sixdub.net/2014/11/07/offensive-event-parsing-bringing-home-trophies/
 
 
 function Find-DomainShare {
-<#
-.SYNOPSIS
-
-Searches for computer shares on the domain. If -CheckShareAccess is passed,
-then only shares the current user has read access to are returned.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: Get-DomainComputer, Invoke-UserImpersonation, Invoke-RevertToSelf, Get-NetShare, New-ThreadedFunction  
-
-.DESCRIPTION
-
-This function enumerates all machines on the current (or specified) domain
-using Get-DomainComputer, and enumerates the available shares for each
-machine with Get-NetShare. If -CheckShareAccess is passed, then
-[IO.Directory]::GetFiles() is used to check if the current user has read
-access to the given share. If -Credential is passed, then
-Invoke-UserImpersonation is used to impersonate the specified user before
-enumeration, reverting after with Invoke-RevertToSelf.
-
-.PARAMETER ComputerName
-
-Specifies an array of one or more hosts to enumerate, passable on the pipeline.
-If -ComputerName is not passed, the default behavior is to enumerate all machines
-in the domain returned by Get-DomainComputer.
-
-.PARAMETER ComputerDomain
-
-Specifies the domain to query for computers, defaults to the current domain.
-
-.PARAMETER ComputerLDAPFilter
-
-Specifies an LDAP query string that is used to search for computer objects.
-
-.PARAMETER ComputerSearchBase
-
-Specifies the LDAP source to search through for computers,
-e.g. "LDAP://OU=secret,DC=testlab,DC=local". Useful for OU queries.
-
-.PARAMETER ComputerOperatingSystem
-
-Search computers with a specific operating system, wildcards accepted.
-
-.PARAMETER ComputerServicePack
-
-Search computers with a specific service pack, wildcards accepted.
-
-.PARAMETER ComputerSiteName
-
-Search computers in the specific AD Site name, wildcards accepted.
-
-.PARAMETER CheckShareAccess
-
-Switch. Only display found shares that the local user has access to.
-
-.PARAMETER Server
-
-Specifies an Active Directory server (domain controller) to bind to.
-
-.PARAMETER SearchScope
-
-Specifies the scope to search under for computers, Base/OneLevel/Subtree (default of Subtree).
-
-.PARAMETER ResultPageSize
-
-Specifies the PageSize to set for the LDAP searcher object.
-
-.PARAMETER ServerTimeLimit
-
-Specifies the maximum amount of time the server spends searching. Default of 120 seconds.
-
-.PARAMETER Tombstone
-
-Switch. Specifies that the searcher should also return deleted/tombstoned objects.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the target domain and target systems.
-
-.PARAMETER Delay
-
-Specifies the delay (in seconds) between enumerating hosts, defaults to 0.
-
-.PARAMETER Jitter
-
-Specifies the jitter (0-1.0) to apply to any specified -Delay, defaults to +/- 0.3
-
-.PARAMETER Threads
-
-The number of threads to use for user searching, defaults to 20.
-
-.EXAMPLE
-
-Find-DomainShare
-
-Find all domain shares in the current domain.
-
-.EXAMPLE
-
-Find-DomainShare -CheckShareAccess
-
-Find all domain shares in the current domain that the current user has
-read access to.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Find-DomainShare -Domain testlab.local -Credential $Cred
-
-Searches for domain shares in the testlab.local domain using the specified alternate credentials.
-
-.OUTPUTS
-
-PowerView.ShareInfo
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [OutputType('PowerView.ShareInfo')]
@@ -13492,150 +11170,6 @@ PowerView.ShareInfo
 
 
 function Find-InterestingDomainShareFile {
-<#
-.SYNOPSIS
-
-Searches for files matching specific criteria on readable shares
-in the domain.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: Get-DomainComputer, Invoke-UserImpersonation, Invoke-RevertToSelf, Get-NetShare, Find-InterestingFile, New-ThreadedFunction  
-
-.DESCRIPTION
-
-This function enumerates all machines on the current (or specified) domain
-using Get-DomainComputer, and enumerates the available shares for each
-machine with Get-NetShare. It will then use Find-InterestingFile on each
-readhable share, searching for files marching specific criteria. If -Credential
-is passed, then Invoke-UserImpersonation is used to impersonate the specified
-user before enumeration, reverting after with Invoke-RevertToSelf.
-
-.PARAMETER ComputerName
-
-Specifies an array of one or more hosts to enumerate, passable on the pipeline.
-If -ComputerName is not passed, the default behavior is to enumerate all machines
-in the domain returned by Get-DomainComputer.
-
-.PARAMETER ComputerDomain
-
-Specifies the domain to query for computers, defaults to the current domain.
-
-.PARAMETER ComputerLDAPFilter
-
-Specifies an LDAP query string that is used to search for computer objects.
-
-.PARAMETER ComputerSearchBase
-
-Specifies the LDAP source to search through for computers,
-e.g. "LDAP://OU=secret,DC=testlab,DC=local". Useful for OU queries.
-
-.PARAMETER ComputerOperatingSystem
-
-Search computers with a specific operating system, wildcards accepted.
-
-.PARAMETER ComputerServicePack
-
-Search computers with a specific service pack, wildcards accepted.
-
-.PARAMETER ComputerSiteName
-
-Search computers in the specific AD Site name, wildcards accepted.
-
-.PARAMETER Include
-
-Only return files/folders that match the specified array of strings,
-i.e. @(*.doc*, *.xls*, *.ppt*)
-
-.PARAMETER SharePath
-
-Specifies one or more specific share paths to search, in the form \\COMPUTER\Share
-
-.PARAMETER ExcludedShares
-
-Specifies share paths to exclude, default of C$, Admin$, Print$, IPC$.
-
-.PARAMETER LastAccessTime
-
-Only return files with a LastAccessTime greater than this date value.
-
-.PARAMETER LastWriteTime
-
-Only return files with a LastWriteTime greater than this date value.
-
-.PARAMETER CreationTime
-
-Only return files with a CreationTime greater than this date value.
-
-.PARAMETER OfficeDocs
-
-Switch. Search for office documents (*.doc*, *.xls*, *.ppt*)
-
-.PARAMETER FreshEXEs
-
-Switch. Find .EXEs accessed within the last 7 days.
-
-.PARAMETER Server
-
-Specifies an Active Directory server (domain controller) to bind to.
-
-.PARAMETER SearchScope
-
-Specifies the scope to search under for computers, Base/OneLevel/Subtree (default of Subtree).
-
-.PARAMETER ResultPageSize
-
-Specifies the PageSize to set for the LDAP searcher object.
-
-.PARAMETER ServerTimeLimit
-
-Specifies the maximum amount of time the server spends searching. Default of 120 seconds.
-
-.PARAMETER Tombstone
-
-Switch. Specifies that the searcher should also return deleted/tombstoned objects.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the target domain and target systems.
-
-.PARAMETER Delay
-
-Specifies the delay (in seconds) between enumerating hosts, defaults to 0.
-
-.PARAMETER Jitter
-
-Specifies the jitter (0-1.0) to apply to any specified -Delay, defaults to +/- 0.3
-
-.PARAMETER Threads
-
-The number of threads to use for user searching, defaults to 20.
-
-.EXAMPLE
-
-Find-InterestingDomainShareFile
-
-Finds 'interesting' files on the current domain.
-
-.EXAMPLE
-
-Find-InterestingDomainShareFile -ComputerName @('windows1.testlab.local','windows2.testlab.local')
-
-Finds 'interesting' files on readable shares on the specified systems.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('DEV\dfm.a', $SecPassword)
-Find-DomainShare -Domain testlab.local -Credential $Cred
-
-Searches interesting files in the testlab.local domain using the specified alternate credentials.
-
-.OUTPUTS
-
-PowerView.FoundFile
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [OutputType('PowerView.FoundFile')]
@@ -13910,127 +11444,6 @@ PowerView.FoundFile
 
 
 function Find-LocalAdminAccess {
-<#
-.SYNOPSIS
-
-Finds machines on the local domain where the current user has local administrator access.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: Get-DomainComputer, Invoke-UserImpersonation, Invoke-RevertToSelf, Test-AdminAccess, New-ThreadedFunction  
-
-.DESCRIPTION
-
-This function enumerates all machines on the current (or specified) domain
-using Get-DomainComputer, and for each computer it checks if the current user
-has local administrator access using Test-AdminAccess. If -Credential is passed,
-then Invoke-UserImpersonation is used to impersonate the specified user
-before enumeration, reverting after with Invoke-RevertToSelf.
-
-Idea adapted from the local_admin_search_enum post module in Metasploit written by:
-    'Brandon McCann "zeknox" <bmccann[at]accuvant.com>'
-    'Thomas McCarthy "smilingraccoon" <smilingraccoon[at]gmail.com>'
-    'Royce Davis "r3dy" <rdavis[at]accuvant.com>'
-
-.PARAMETER ComputerName
-
-Specifies an array of one or more hosts to enumerate, passable on the pipeline.
-If -ComputerName is not passed, the default behavior is to enumerate all machines
-in the domain returned by Get-DomainComputer.
-
-.PARAMETER ComputerDomain
-
-Specifies the domain to query for computers, defaults to the current domain.
-
-.PARAMETER ComputerLDAPFilter
-
-Specifies an LDAP query string that is used to search for computer objects.
-
-.PARAMETER ComputerSearchBase
-
-Specifies the LDAP source to search through for computers,
-e.g. "LDAP://OU=secret,DC=testlab,DC=local". Useful for OU queries.
-
-.PARAMETER ComputerOperatingSystem
-
-Search computers with a specific operating system, wildcards accepted.
-
-.PARAMETER ComputerServicePack
-
-Search computers with a specific service pack, wildcards accepted.
-
-.PARAMETER ComputerSiteName
-
-Search computers in the specific AD Site name, wildcards accepted.
-
-.PARAMETER CheckShareAccess
-
-Switch. Only display found shares that the local user has access to.
-
-.PARAMETER Server
-
-Specifies an Active Directory server (domain controller) to bind to.
-
-.PARAMETER SearchScope
-
-Specifies the scope to search under for computers, Base/OneLevel/Subtree (default of Subtree).
-
-.PARAMETER ResultPageSize
-
-Specifies the PageSize to set for the LDAP searcher object.
-
-.PARAMETER ServerTimeLimit
-
-Specifies the maximum amount of time the server spends searching. Default of 120 seconds.
-
-.PARAMETER Tombstone
-
-Switch. Specifies that the searcher should also return deleted/tombstoned objects.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the target domain and target systems.
-
-.PARAMETER Delay
-
-Specifies the delay (in seconds) between enumerating hosts, defaults to 0.
-
-.PARAMETER Jitter
-
-Specifies the jitter (0-1.0) to apply to any specified -Delay, defaults to +/- 0.3
-
-.PARAMETER Threads
-
-The number of threads to use for user searching, defaults to 20.
-
-.EXAMPLE
-
-Find-LocalAdminAccess
-
-Finds machines in the current domain the current user has admin access to.
-
-.EXAMPLE
-
-Find-LocalAdminAccess -Domain dev.testlab.local
-
-Finds machines in the dev.testlab.local domain the current user has admin access to.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Find-LocalAdminAccess -Domain testlab.local -Credential $Cred
-
-Finds machines in the testlab.local domain that the user with the specified -Credential
-has admin access to.
-
-.OUTPUTS
-
-String
-
-Computer dnshostnames the current user has administrative access to.
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [OutputType([String])]
@@ -14208,131 +11621,6 @@ Computer dnshostnames the current user has administrative access to.
 
 
 function Find-DomainLocalGroupMember {
-<#
-.SYNOPSIS
-
-Enumerates the members of specified local group (default administrators)
-for all the targeted machines on the current (or specified) domain.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: Get-DomainComputer, Invoke-UserImpersonation, Invoke-RevertToSelf, Get-NetLocalGroupMember, New-ThreadedFunction  
-
-.DESCRIPTION
-
-This function enumerates all machines on the current (or specified) domain
-using Get-DomainComputer, and enumerates the members of the specified local
-group (default of Administrators) for each machine using Get-NetLocalGroupMember.
-By default, the API method is used, but this can be modified with '-Method winnt'
-to use the WinNT service provider.
-
-.PARAMETER ComputerName
-
-Specifies an array of one or more hosts to enumerate, passable on the pipeline.
-If -ComputerName is not passed, the default behavior is to enumerate all machines
-in the domain returned by Get-DomainComputer.
-
-.PARAMETER ComputerDomain
-
-Specifies the domain to query for computers, defaults to the current domain.
-
-.PARAMETER ComputerLDAPFilter
-
-Specifies an LDAP query string that is used to search for computer objects.
-
-.PARAMETER ComputerSearchBase
-
-Specifies the LDAP source to search through for computers,
-e.g. "LDAP://OU=secret,DC=testlab,DC=local". Useful for OU queries.
-
-.PARAMETER ComputerOperatingSystem
-
-Search computers with a specific operating system, wildcards accepted.
-
-.PARAMETER ComputerServicePack
-
-Search computers with a specific service pack, wildcards accepted.
-
-.PARAMETER ComputerSiteName
-
-Search computers in the specific AD Site name, wildcards accepted.
-
-.PARAMETER GroupName
-
-The local group name to query for users. If not given, it defaults to "Administrators".
-
-.PARAMETER Method
-
-The collection method to use, defaults to 'API', also accepts 'WinNT'.
-
-.PARAMETER Server
-
-Specifies an Active Directory server (domain controller) to bind to.
-
-.PARAMETER SearchScope
-
-Specifies the scope to search under for computers, Base/OneLevel/Subtree (default of Subtree).
-
-.PARAMETER ResultPageSize
-
-Specifies the PageSize to set for the LDAP searcher object.
-
-.PARAMETER ServerTimeLimit
-
-Specifies the maximum amount of time the server spends searching. Default of 120 seconds.
-
-.PARAMETER Tombstone
-
-Switch. Specifies that the searcher should also return deleted/tombstoned objects.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the target domain and target systems.
-
-.PARAMETER Delay
-
-Specifies the delay (in seconds) between enumerating hosts, defaults to 0.
-
-.PARAMETER Jitter
-
-Specifies the jitter (0-1.0) to apply to any specified -Delay, defaults to +/- 0.3
-
-.PARAMETER Threads
-
-The number of threads to use for user searching, defaults to 20.
-
-.EXAMPLE
-
-Find-DomainLocalGroupMember
-
-Enumerates the local group memberships for all reachable machines in the current domain.
-
-.EXAMPLE
-
-Find-DomainLocalGroupMember -Domain dev.testlab.local
-
-Enumerates the local group memberships for all reachable machines the dev.testlab.local domain.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Find-DomainLocalGroupMember -Domain testlab.local -Credential $Cred
-
-Enumerates the local group memberships for all reachable machines the dev.testlab.local
-domain using the alternate credentials.
-
-.OUTPUTS
-
-PowerView.LocalGroupMember.API
-
-Custom PSObject with translated group property fields from API results.
-
-PowerView.LocalGroupMember.WinNT
-
-Custom PSObject with translated group property fields from WinNT results.
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [OutputType('PowerView.LocalGroupMember.API')]
@@ -14532,129 +11820,13 @@ Custom PSObject with translated group property fields from WinNT results.
 }
 
 
-########################################################
-#
-# Domain trust functions below.
-#
-########################################################
+
+
+
+
+
 
 function Get-DomainTrust {
-<#
-.SYNOPSIS
-
-Return all domain trusts for the current domain or a specified domain.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: Get-Domain, Get-DomainSearcher, Get-DomainSID, PSReflect  
-
-.DESCRIPTION
-
-This function will enumerate domain trust relationships for the current (or a remote)
-domain using a number of methods. By default, and LDAP search using the filter
-'(objectClass=trustedDomain)' is used- if any LDAP-appropriate parameters are specified
-LDAP is used as well. If the -NET flag is specified, the .NET method
-GetAllTrustRelationships() is used on the System.DirectoryServices.ActiveDirectory.Domain
-object. If the -API flag is specified, the Win32 API DsEnumerateDomainTrusts() call is
-used to enumerate instead.
-
-.PARAMETER Domain
-
-Specifies the domain to query for trusts, defaults to the current domain.
-
-.PARAMETER API
-
-Switch. Use an API call (DsEnumerateDomainTrusts) to enumerate the trusts instead of the built-in
-.NET methods.
-
-.PARAMETER NET
-
-Switch. Use .NET queries to enumerate trusts instead of the default LDAP method.
-
-.PARAMETER LDAPFilter
-
-Specifies an LDAP query string that is used to filter Active Directory objects.
-
-.PARAMETER Properties
-
-Specifies the properties of the output object to retrieve from the server.
-
-.PARAMETER SearchBase
-
-The LDAP source to search through, e.g. "LDAP://OU=secret,DC=testlab,DC=local"
-Useful for OU queries.
-
-.PARAMETER Server
-
-Specifies an Active Directory server (domain controller) to bind to.
-
-.PARAMETER SearchScope
-
-Specifies the scope to search under, Base/OneLevel/Subtree (default of Subtree).
-
-.PARAMETER ResultPageSize
-
-Specifies the PageSize to set for the LDAP searcher object.
-
-.PARAMETER ServerTimeLimit
-
-Specifies the maximum amount of time the server spends searching. Default of 120 seconds.
-
-.PARAMETER Tombstone
-
-Switch. Specifies that the searcher should also return deleted/tombstoned objects.
-
-.PARAMETER FindOne
-
-Only return one result object.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the target domain.
-
-.EXAMPLE
-
-Get-DomainTrust
-
-Return domain trusts for the current domain using built in .LDAP methods.
-
-.EXAMPLE
-
-Get-DomainTrust -NET -Domain "prod.testlab.local"
-
-Return domain trusts for the "prod.testlab.local" domain using .NET methods
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Get-DomainTrust -Domain "prod.testlab.local" -Server "PRIMARY.testlab.local" -Credential $Cred
-
-Return domain trusts for the "prod.testlab.local" domain enumerated through LDAP
-queries, binding to the PRIMARY.testlab.local server for queries, and using the specified
-alternate credenitals.
-
-.EXAMPLE
-
-Get-DomainTrust -API -Domain "prod.testlab.local"
-
-Return domain trusts for the "prod.testlab.local" domain enumerated through API calls.
-
-.OUTPUTS
-
-PowerView.DomainTrust.LDAP
-
-Custom PSObject with translated domain LDAP trust result fields (default).
-
-PowerView.DomainTrust.NET
-
-A TrustRelationshipInformationCollection returned when using .NET methods.
-
-PowerView.DomainTrust.API
-
-Custom PSObject with translated domain API trust result fields.
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [OutputType('PowerView.DomainTrust.NET')]
@@ -14936,56 +12108,6 @@ Custom PSObject with translated domain API trust result fields.
 
 
 function Get-ForestTrust {
-<#
-.SYNOPSIS
-
-Return all forest trusts for the current forest or a specified forest.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: Get-Forest  
-
-.DESCRIPTION
-
-This function will enumerate domain trust relationships for the current (or a remote)
-forest using number of method using the .NET method GetAllTrustRelationships() on a
-System.DirectoryServices.ActiveDirectory.Forest returned by Get-Forest.
-
-.PARAMETER Forest
-
-Specifies the forest to query for trusts, defaults to the current forest.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the target domain.
-
-.EXAMPLE
-
-Get-ForestTrust
-
-Return current forest trusts.
-
-.EXAMPLE
-
-Get-ForestTrust -Forest "external.local"
-
-Return trusts for the "external.local" forest.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Get-ForestTrust -Forest "external.local" -Credential $Cred
-
-Return trusts for the "external.local" forest using the specified alternate credenitals.
-
-.OUTPUTS
-
-PowerView.DomainTrust.NET
-
-A TrustRelationshipInformationCollection returned when using .NET methods (default).
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [OutputType('PowerView.ForestTrust.NET')]
@@ -15020,100 +12142,6 @@ A TrustRelationshipInformationCollection returned when using .NET methods (defau
 
 
 function Get-DomainForeignUser {
-<#
-.SYNOPSIS
-
-Enumerates users who are in groups outside of the user's domain.
-This is a domain's "outgoing" access.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: Get-Domain, Get-DomainUser  
-
-.DESCRIPTION
-
-Uses Get-DomainUser to enumerate all users for the current (or target) domain,
-then calculates the given user's domain name based on the user's distinguishedName.
-This domain name is compared to the queried domain, and the user object is
-output if they differ.
-
-.PARAMETER Domain
-
-Specifies the domain to use for the query, defaults to the current domain.
-
-.PARAMETER LDAPFilter
-
-Specifies an LDAP query string that is used to filter Active Directory objects.
-
-.PARAMETER Properties
-
-Specifies the properties of the output object to retrieve from the server.
-
-.PARAMETER SearchBase
-
-The LDAP source to search through, e.g. "LDAP://OU=secret,DC=testlab,DC=local"
-Useful for OU queries.
-
-.PARAMETER Server
-
-Specifies an Active Directory server (domain controller) to bind to.
-
-.PARAMETER SearchScope
-
-Specifies the scope to search under, Base/OneLevel/Subtree (default of Subtree).
-
-.PARAMETER ResultPageSize
-
-Specifies the PageSize to set for the LDAP searcher object.
-
-.PARAMETER ServerTimeLimit
-
-Specifies the maximum amount of time the server spends searching. Default of 120 seconds.
-
-.PARAMETER SecurityMasks
-
-Specifies an option for examining security information of a directory object.
-One of 'Dacl', 'Group', 'None', 'Owner', 'Sacl'.
-
-.PARAMETER Tombstone
-
-Switch. Specifies that the searcher should also return deleted/tombstoned objects.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the target domain.
-
-.EXAMPLE
-
-Get-DomainForeignUser
-
-Return all users in the current domain who are in groups not in the
-current domain.
-
-.EXAMPLE
-
-Get-DomainForeignUser -Domain dev.testlab.local
-
-Return all users in the dev.testlab.local domain who are in groups not in the
-dev.testlab.local domain.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Get-DomainForeignUser -Domain dev.testlab.local -Server secondary.dev.testlab.local -Credential $Cred
-
-Return all users in the dev.testlab.local domain who are in groups not in the
-dev.testlab.local domain, binding to the secondary.dev.testlab.local for queries, and
-using the specified alternate credentials.
-
-.OUTPUTS
-
-PowerView.ForeignUser
-
-Custom PSObject with translated user property fields.
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [OutputType('PowerView.ForeignUser')]
@@ -15216,97 +12244,6 @@ Custom PSObject with translated user property fields.
 
 
 function Get-DomainForeignGroupMember {
-<#
-.SYNOPSIS
-
-Enumerates groups with users outside of the group's domain and returns
-each foreign member. This is a domain's "incoming" access.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: Get-Domain, Get-DomainGroup  
-
-.DESCRIPTION
-
-Uses Get-DomainGroup to enumerate all groups for the current (or target) domain,
-then enumerates the members of each group, and compares the member's domain
-name to the parent group's domain name, outputting the member if the domains differ.
-
-.PARAMETER Domain
-
-Specifies the domain to use for the query, defaults to the current domain.
-
-.PARAMETER LDAPFilter
-
-Specifies an LDAP query string that is used to filter Active Directory objects.
-
-.PARAMETER Properties
-
-Specifies the properties of the output object to retrieve from the server.
-
-.PARAMETER SearchBase
-
-The LDAP source to search through, e.g. "LDAP://OU=secret,DC=testlab,DC=local"
-Useful for OU queries.
-
-.PARAMETER Server
-
-Specifies an Active Directory server (domain controller) to bind to.
-
-.PARAMETER SearchScope
-
-Specifies the scope to search under, Base/OneLevel/Subtree (default of Subtree).
-
-.PARAMETER ResultPageSize
-
-Specifies the PageSize to set for the LDAP searcher object.
-
-.PARAMETER ServerTimeLimit
-
-Specifies the maximum amount of time the server spends searching. Default of 120 seconds.
-
-.PARAMETER SecurityMasks
-
-Specifies an option for examining security information of a directory object.
-One of 'Dacl', 'Group', 'None', 'Owner', 'Sacl'.
-
-.PARAMETER Tombstone
-
-Switch. Specifies that the searcher should also return deleted/tombstoned objects.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the target domain.
-
-.EXAMPLE
-
-Get-DomainForeignGroupMember
-
-Return all group members in the current domain where the group and member differ.
-
-.EXAMPLE
-
-Get-DomainForeignGroupMember -Domain dev.testlab.local
-
-Return all group members in the dev.testlab.local domain where the member is not in dev.testlab.local.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Get-DomainForeignGroupMember -Domain dev.testlab.local -Server secondary.dev.testlab.local -Credential $Cred
-
-Return all group members in the dev.testlab.local domain where the member is
-not in dev.testlab.local. binding to the secondary.dev.testlab.local for
-queries, and using the specified alternate credentials.
-
-.OUTPUTS
-
-PowerView.ForeignGroupMember
-
-Custom PSObject with translated group member property fields.
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [OutputType('PowerView.ForeignGroupMember')]
@@ -15411,115 +12348,6 @@ Custom PSObject with translated group member property fields.
 
 
 function Get-DomainTrustMapping {
-<#
-.SYNOPSIS
-
-This function enumerates all trusts for the current domain and then enumerates
-all trusts for each domain it finds.
-
-Author: Will Schroeder (@harmj0y)  
-License: BSD 3-Clause  
-Required Dependencies: Get-Domain, Get-DomainTrust, Get-ForestTrust  
-
-.DESCRIPTION
-
-This function will enumerate domain trust relationships for the current domain using
-a number of methods, and then enumerates all trusts for each found domain, recursively
-mapping all reachable trust relationships. By default, and LDAP search using the filter
-'(objectClass=trustedDomain)' is used- if any LDAP-appropriate parameters are specified
-LDAP is used as well. If the -NET flag is specified, the .NET method
-GetAllTrustRelationships() is used on the System.DirectoryServices.ActiveDirectory.Domain
-object. If the -API flag is specified, the Win32 API DsEnumerateDomainTrusts() call is
-used to enumerate instead. If any 
-
-.PARAMETER API
-
-Switch. Use an API call (DsEnumerateDomainTrusts) to enumerate the trusts instead of the
-built-in LDAP method.
-
-.PARAMETER NET
-
-Switch. Use .NET queries to enumerate trusts instead of the default LDAP method.
-
-.PARAMETER LDAPFilter
-
-Specifies an LDAP query string that is used to filter Active Directory objects.
-
-.PARAMETER Properties
-
-Specifies the properties of the output object to retrieve from the server.
-
-.PARAMETER SearchBase
-
-The LDAP source to search through, e.g. "LDAP://OU=secret,DC=testlab,DC=local"
-Useful for OU queries.
-
-.PARAMETER Server
-
-Specifies an Active Directory server (domain controller) to bind to.
-
-.PARAMETER SearchScope
-
-Specifies the scope to search under, Base/OneLevel/Subtree (default of Subtree).
-
-.PARAMETER ResultPageSize
-
-Specifies the PageSize to set for the LDAP searcher object.
-
-.PARAMETER ServerTimeLimit
-
-Specifies the maximum amount of time the server spends searching. Default of 120 seconds.
-
-.PARAMETER Tombstone
-
-Switch. Specifies that the searcher should also return deleted/tombstoned objects.
-
-.PARAMETER Credential
-
-A [Management.Automation.PSCredential] object of alternate credentials
-for connection to the target domain.
-
-.EXAMPLE
-
-Get-DomainTrustMapping | Export-CSV -NoTypeInformation trusts.csv
-
-Map all reachable domain trusts using .NET methods and output everything to a .csv file.
-
-.EXAMPLE
-
-Get-DomainTrustMapping -API | Export-CSV -NoTypeInformation trusts.csv
-
-Map all reachable domain trusts using Win32 API calls and output everything to a .csv file.
-
-.EXAMPLE
-
-Get-DomainTrustMapping -NET | Export-CSV -NoTypeInformation trusts.csv
-
-Map all reachable domain trusts using .NET methods and output everything to a .csv file.
-
-.EXAMPLE
-
-$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
-Get-DomainTrustMapping -Server 'PRIMARY.testlab.local' | Export-CSV -NoTypeInformation trusts.csv
-
-Map all reachable domain trusts using LDAP, binding to the PRIMARY.testlab.local server for queries
-using the specified alternate credentials, and output everything to a .csv file.
-
-.OUTPUTS
-
-PowerView.DomainTrust.LDAP
-
-Custom PSObject with translated domain LDAP trust result fields (default).
-
-PowerView.DomainTrust.NET
-
-A TrustRelationshipInformationCollection returned when using .NET methods.
-
-PowerView.DomainTrust.API
-
-Custom PSObject with translated domain API trust result fields.
-#>
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
     [OutputType('PowerView.DomainTrust.NET')]
@@ -15665,35 +12493,6 @@ Custom PSObject with translated domain API trust result fields.
 
 
 function Get-GPODelegation {
-<#
-.SYNOPSIS
-
-Finds users with write permissions on GPO objects which may allow privilege escalation within the domain.
-
-Author: Itamar Mizrahi (@MrAnde7son)  
-License: BSD 3-Clause  
-Required Dependencies: None  
-
-.PARAMETER GPOName
-
-The GPO display name to query for, wildcards accepted.
-
-.PARAMETER PageSize
-
-Specifies the PageSize to set for the LDAP searcher object.
-
-.EXAMPLE
-
-Get-GPODelegation
-
-Returns all GPO delegations in current forest.
-
-.EXAMPLE
-
-Get-GPODelegation -GPOName
-
-Returns all GPO delegations on a given GPO.
-#>
 
     [CmdletBinding()]
     Param (
@@ -15733,20 +12532,20 @@ Returns all GPO delegations on a given GPO.
 }
 
 
-########################################################
-#
-# Expose the Win32API functions and datastructures below
-# using PSReflect.
-# Warning: Once these are executed, they are baked in
-# and can't be changed while the script is running!
-#
-########################################################
+
+
+
+
+
+
+
+
 
 $Mod = New-InMemoryModule -ModuleName Win32
 
-# [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPositionalParameters', Scope='Function', Target='psenum')]
 
-# used to parse the 'samAccountType' property for users/computers/groups
+
+
 $SamAccountTypeEnum = psenum $Mod PowerView.SamAccountTypeEnum UInt32 @{
     DOMAIN_OBJECT                   =   '0x00000000'
     GROUP_OBJECT                    =   '0x10000000'
@@ -15761,7 +12560,7 @@ $SamAccountTypeEnum = psenum $Mod PowerView.SamAccountTypeEnum UInt32 @{
     ACCOUNT_TYPE_MAX                =   '0x7fffffff'
 }
 
-# used to parse the 'grouptype' property for groups
+
 $GroupTypeEnum = psenum $Mod PowerView.GroupTypeEnum UInt32 @{
     CREATED_BY_SYSTEM               =   '0x00000001'
     GLOBAL_SCOPE                    =   '0x00000002'
@@ -15772,7 +12571,7 @@ $GroupTypeEnum = psenum $Mod PowerView.GroupTypeEnum UInt32 @{
     SECURITY                        =   '0x80000000'
 } -Bitfield
 
-# used to parse the 'userAccountControl' property for users/groups
+
 $UACEnum = psenum $Mod PowerView.UACEnum UInt32 @{
     SCRIPT                          =   1
     ACCOUNTDISABLE                  =   2
@@ -15798,7 +12597,7 @@ $UACEnum = psenum $Mod PowerView.UACEnum UInt32 @{
     PARTIAL_SECRETS_ACCOUNT         =   67108864
 } -Bitfield
 
-# enum used by $WTS_SESSION_INFO_1 below
+
 $WTSConnectState = psenum $Mod WTS_CONNECTSTATE_CLASS UInt16 @{
     Active       =    0
     Connected    =    1
@@ -15812,7 +12611,7 @@ $WTSConnectState = psenum $Mod WTS_CONNECTSTATE_CLASS UInt16 @{
     Init         =    9
 }
 
-# the WTSEnumerateSessionsEx result structure
+
 $WTS_SESSION_INFO_1 = struct $Mod PowerView.RDPSessionInfo @{
     ExecEnvId = field 0 UInt32
     State = field 1 $WTSConnectState
@@ -15824,20 +12623,20 @@ $WTS_SESSION_INFO_1 = struct $Mod PowerView.RDPSessionInfo @{
     pFarmName = field 7 String -MarshalAs @('LPWStr')
 }
 
-# the particular WTSQuerySessionInformation result structure
+
 $WTS_CLIENT_ADDRESS = struct $mod WTS_CLIENT_ADDRESS @{
     AddressFamily = field 0 UInt32
     Address = field 1 Byte[] -MarshalAs @('ByValArray', 20)
 }
 
-# the NetShareEnum result structure
+
 $SHARE_INFO_1 = struct $Mod PowerView.ShareInfo @{
     Name = field 0 String -MarshalAs @('LPWStr')
     Type = field 1 UInt32
     Remark = field 2 String -MarshalAs @('LPWStr')
 }
 
-# the NetWkstaUserEnum result structure
+
 $WKSTA_USER_INFO_1 = struct $Mod PowerView.LoggedOnUserInfo @{
     UserName = field 0 String -MarshalAs @('LPWStr')
     LogonDomain = field 1 String -MarshalAs @('LPWStr')
@@ -15845,7 +12644,7 @@ $WKSTA_USER_INFO_1 = struct $Mod PowerView.LoggedOnUserInfo @{
     LogonServer = field 3 String -MarshalAs @('LPWStr')
 }
 
-# the NetSessionEnum result structure
+
 $SESSION_INFO_10 = struct $Mod PowerView.SessionInfo @{
     CName = field 0 String -MarshalAs @('LPWStr')
     UserName = field 1 String -MarshalAs @('LPWStr')
@@ -15853,7 +12652,7 @@ $SESSION_INFO_10 = struct $Mod PowerView.SessionInfo @{
     IdleTime = field 3 UInt32
 }
 
-# enum used by $LOCALGROUP_MEMBERS_INFO_2 below
+
 $SID_NAME_USE = psenum $Mod SID_NAME_USE UInt16 @{
     SidTypeUser             = 1
     SidTypeGroup            = 2
@@ -15866,20 +12665,20 @@ $SID_NAME_USE = psenum $Mod SID_NAME_USE UInt16 @{
     SidTypeComputer         = 9
 }
 
-# the NetLocalGroupEnum result structure
+
 $LOCALGROUP_INFO_1 = struct $Mod LOCALGROUP_INFO_1 @{
     lgrpi1_name = field 0 String -MarshalAs @('LPWStr')
     lgrpi1_comment = field 1 String -MarshalAs @('LPWStr')
 }
 
-# the NetLocalGroupGetMembers result structure
+
 $LOCALGROUP_MEMBERS_INFO_2 = struct $Mod LOCALGROUP_MEMBERS_INFO_2 @{
     lgrmi2_sid = field 0 IntPtr
     lgrmi2_sidusage = field 1 $SID_NAME_USE
     lgrmi2_domainandname = field 2 String -MarshalAs @('LPWStr')
 }
 
-# enums used in DS_DOMAIN_TRUSTS
+
 $DsDomainFlag = psenum $Mod DsDomain.Flags UInt32 @{
     IN_FOREST       = 1
     DIRECT_OUTBOUND = 2
@@ -15904,7 +12703,7 @@ $DsDomainTrustAttributes = psenum $Mod DsDomain.TrustAttributes UInt32 @{
     TREAT_AS_EXTERNAL   = 64
 }
 
-# the DsEnumerateDomainTrusts result structure
+
 $DS_DOMAIN_TRUSTS = struct $Mod DS_DOMAIN_TRUSTS @{
     NetbiosDomainName = field 0 String -MarshalAs @('LPWStr')
     DnsDomainName = field 1 String -MarshalAs @('LPWStr')
@@ -15916,7 +12715,7 @@ $DS_DOMAIN_TRUSTS = struct $Mod DS_DOMAIN_TRUSTS @{
     DomainGuid = field 7 Guid
 }
 
-# used by WNetAddConnection2W
+
 $NETRESOURCEW = struct $Mod NETRESOURCEW @{
     dwScope =         field 0 UInt32
     dwType =          field 1 UInt32
@@ -15928,7 +12727,7 @@ $NETRESOURCEW = struct $Mod NETRESOURCEW @{
     lpProvider =      field 7 String -MarshalAs @('LPWStr')
 }
 
-# all of the Win32 API functions we need
+
 $FunctionDefinitions = @(
     (func netapi32 NetShareEnum ([Int]) @([String], [Int], [IntPtr].MakeByRefType(), [Int], [Int32].MakeByRefType(), [Int32].MakeByRefType(), [Int32].MakeByRefType())),
     (func netapi32 NetWkstaUserEnum ([Int]) @([String], [Int], [IntPtr].MakeByRefType(), [Int], [Int32].MakeByRefType(), [Int32].MakeByRefType(), [Int32].MakeByRefType())),
