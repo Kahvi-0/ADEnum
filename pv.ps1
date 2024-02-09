@@ -2922,6 +2922,9 @@ function Get-DomainUser {
         [Switch]
         $TrustedToAuth,
 
+        [Switch]
+        $LockoutThreshold,
+
         [Alias('KerberosPreauthNotRequired', 'NoPreauth')]
         [Switch]
         $PreauthNotRequired,
@@ -3075,6 +3078,10 @@ function Get-DomainUser {
             if ($PSBoundParameters['TrustedToAuth']) {
                 Write-Verbose '[Get-DomainUser] Searching for users that are trusted to authenticate for other principals'
                 $Filter += '(msds-allowedtodelegateto=*)'
+            }
+            if ($PSBoundParameters['LockoutThreshold']) {
+                Write-Verbose '[Get-DomainUser] Looking for users with lockout threshold set'
+                $Filter += '(msds-Lockout-Threshold=*)'
             }
             if ($PSBoundParameters['PreauthNotRequired']) {
                 Write-Verbose '[Get-DomainUser] Searching for user accounts that do not require kerberos preauthenticate'
