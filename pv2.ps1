@@ -1,6 +1,3 @@
-
-
-
 function New-InMemoryModule {
 
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '')]
