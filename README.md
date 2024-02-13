@@ -14,6 +14,8 @@ Automated network check for things such as MSSQL server (still working)
 
 Automated enumeration of possible password policy locations 
 
+distingushed name can be found in bloodhound
+
 Usage
 ```
 passpull.sh [user] [password] [dc list] [domain.local] [distingushed name]
