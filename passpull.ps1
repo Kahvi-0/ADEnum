@@ -33,12 +33,14 @@ function passpull {
     echo "--------------------------------"
     echo "Checking for fine grain policies"
     echo "--------------------------------"
-    $Filter = "(msDS-LockoutThreshold=*)"
-    $Searcher = New-Object DirectoryServices.DirectorySearcher
-    $Searcher.SearchRoot = New-Object System.DirectoryServices.DirectoryEntry("LDAP://$DC")
-    $Searcher.Filter = $Filter
-    $Searcher.SearchScope = "Subtree"
-    $Searcher.FindAll()
-    foreach ($objResult in $Result)
-        {echo ""; $objResult.Properties.givenname; $objResult.Properties.LockoutThreshold;}
+    $Filter2 = "(msDS-LockoutThreshold=*)"
+    $Searcher2 = New-Object DirectoryServices.DirectorySearcher
+    $Searcher2.SearchRoot = New-Object System.DirectoryServices.DirectoryEntry("LDAP://$DC")
+    $Searcher2.Filter = $Filter2
+    $Searcher2.SearchScope = "Subtree"
+    $Searcher2.FindAll()
+    $Result2 = $Searcher2.FindAll()
+    foreach ($objResult2 in $Result2)
+        {echo ""; $objResult2.Properties.cn; echo "User who this applies to"; $objResult2.Properties."msds-psoappliesto"; echo "Lockout Threshold"; $objResult2.Properties."msds-lockoutthreshold";echo "Min Password Length"; $objResult2.Properties."msds-minimumpasswordlength"; echo "Reversible Encryption Enabled?"; $objResult2.Properties."msds-passwordreversibleencryptionenabled"; echo "Min Password Age"; $objResult2.Properties."msds-minimumpasswordage"; echo "Password Complexity Enabled?"; $objResult2.Properties."msds-passwordcomplexityenabled"; echo "Password Settings Precedence"; $objResult2.Properties."msds-passwordsettingsprecedence"; echo "Max Password Age"; $objResult2.Properties."msds-maximumpasswordage"; echo "LockoutDuration"; $objResult2.Properties."msds-lockoutduration"; echo "Lockout Observation Window"; $objResult2.Properties."msds-lockoutobservationwindow"; echo "Password History Length"; $objResult2.Properties."msds-passwordhistorylength"; }
+
 }
