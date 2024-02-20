@@ -13,7 +13,7 @@ function passpull {
     echo "--------------------------------"
     echo "Checking other policies"
     echo "--------------------------------"
-    Get-ChildItem \\$DC\sysvol\lab.local\Policies\*\GptTmpl.inf -Recurse -erroraction 'silentlycontinue'  | select-string -Pattern ".*Bad.*|Password.*"  -AllMatches |  Format-Table -GroupBy Path -Property line
+    Get-ChildItem \\$DC\sysvol\*\GptTmpl.inf -Recurse -erroraction 'silentlycontinue'  | select-string -Pattern ".*Bad.*|Password.*"  -AllMatches |  Format-Table -GroupBy Path -Property line
 
     # Fine Grain 
     echo ""
