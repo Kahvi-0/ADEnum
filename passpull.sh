@@ -29,7 +29,7 @@ echo ""
 
 echo $4 | awk -F '.' 'BEGIN { ORS=""}; {print"dc="$1}{print","}{print"dc="$2}{printf"\n"}' > base.txt 
 base=$(cat base.txt)
-dcs=$(cat dcs.txt)
+dcs=$(cat $3)
 
 for i in $dcs; do 
 echo "checking $i"
