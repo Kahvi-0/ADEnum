@@ -1,22 +1,40 @@
-# ADEnum
+## ADEnum
 
 Automated enumeration for basic AD checks
+
+```
+wget https://raw.githubusercontent.com/Kahvi-0/ADEnum/main/admad.sh && chmod +x admad.sh
+```
 
 ```
 ./admad.sh [One DC] [username] [password]
 ```
 
+## Netlooker (WIP)
+```
+https://raw.githubusercontent.com/Kahvi-0/ADEnum/main/netlooker.sh && chmod +x netlooker.sh
+```
+```
+netlooker.sh [scope file] [user] [pwd]
+```
 
 Automated network check for things such as MSSQL server (still working)
 
+To do:
+- Look for SCCM
+- Cleanup checks
 
-# Passpull
+## Passpull
 
 Automated enumeration of possible password policy locations 
 
 **Linux**
 
-distingushed name can be found in bloodhound
+_distingushed name can be found in bloodhound_
+
+```
+https://raw.githubusercontent.com/Kahvi-0/ADEnum/main/passpull.sh  && chmod +x passpull.sh
+```
 
 Usage
 ```
