@@ -1,7 +1,7 @@
 
 function passpull {
     echo "--------------------------------"
-    echo "Checking password policy, GPOs, and fine grain policies from: $args[0]" 
+    echo "Checking password policy, GPOs, and fine grain policies from: $env:Domaincontroller" 
     echo "--------------------------------"
     $DC=$args[0]
     echo "--------------------------------"
