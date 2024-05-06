@@ -1,6 +1,8 @@
 
 function passpull {
-
+    echo "--------------------------------"
+    echo "Checking password policy, GPOs, and fine grain policies from: $args[0]" 
+    echo "--------------------------------"
     $DC=$args[0]
     echo "--------------------------------"
     echo "Checking policy applied to current account"
