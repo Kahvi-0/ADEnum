@@ -1,5 +1,1 @@
-function ADE {
-
-  net group "Domain Admins" /domain
-
-}
+net group "Domain Admins" /domain
