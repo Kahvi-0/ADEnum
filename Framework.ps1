@@ -1,4 +1,4 @@
-echo test
+echo test2
 function list-tools {
    echo "--------------------------------"
    echo "ALL TOOLS"
