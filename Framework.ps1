@@ -8,7 +8,10 @@ function list-tools {
 }
 
 function get-tool ($a) {
-    echo $a
+   if ( $a == AVchecker )
+   {
+       Write-Output "The condition was true"
+   }
    
 
 }
