@@ -1,5 +1,5 @@
-echo test2
-function list-tools {
+echo test32
+function list-tools2 {
    echo "--------------------------------"
    echo "ALL TOOLS"
    echo "--------------------------------"
