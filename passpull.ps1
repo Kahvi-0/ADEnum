@@ -1,9 +1,10 @@
 
 function passpull {
     echo "--------------------------------"
-    echo "Checking password policy, GPOs, and fine grain policies from: $env:Domaincontroller" 
+    echo "Please enter the hostname for your target DC"
+    $DC = Read-Host
     echo "--------------------------------"
-    $DC=$args[0]
+    echo "Checking password policy, GPOs, and fine grain policies from: $env:Domaincontroller" 
     echo "--------------------------------"
     echo "Checking policy applied to current account"
     echo "--------------------------------"
