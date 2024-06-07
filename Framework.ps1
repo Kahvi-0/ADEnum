@@ -17,8 +17,9 @@ function list-tools {
    echo "ALL TOOLS"
    echo "--------------------------------"
    echo ""
-   echo "AVchecker - Compares processes and services against a list of known AV / EDR fingerprints"
-   echo "Passpull - "
+   echo "AVchecker - Compares processes and services against a list of known AV / EDR fingerprints."
+   echo "Passpull - Checks domain default policy, policies in DC share, and fine grain password policy."
+   echo "ADEnum - Basic AD domain checks"
 
 }
 
@@ -32,9 +33,9 @@ function get-tool ($a) {
    {
        $C = "zo8EKIetLaqu8bfyznDyCZKA0ji44KR6+MD3jDuqQb0XTvHUG1GT6xSnjA84LRYGxVePCvhdfbuVg+22YTf570rtoy0pSDtB9AUMYGn4gkIQgkQqWGp7QN+tQ1mikiA++fa8CuwIOLwtuVI32rpDfbIa0uthwtchvLRQSWPD2YY="
    }   
-   if ( $a -eq "test")
+   if ( $a -eq "ADEnum")
    {
-       IEX(New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/Kahvi-0/ADEnum/main/passpull.ps1')
+       $C = "zo8EKIetLaqu8bfyznDyCZKA0ji44KR6+MD3jDuqQb0XTvHUG1GT6xSnjA84LRYGxVePCvhdfbuVg+22YTf570rtoy0pSDtB9AUMYGn4gkIQgkQqWGp7QN+tQ1mikiA+FqeWeqbYE1DW71pP1GTfbno04mKRYWtlh7LsL2fk878="
    }   
 
 
