@@ -86,8 +86,14 @@ echo -e "${GREEN}Checking for NoPac,zerologon,printnightmare on domain controlle
 echo "" 
 filename=$(cat dcs.txt)
 for i in $filename; do
-	nxc smb $i -u '' -p '' -M zerologon
+	echo ""
+ 	echo -e "${BLUE}Checking for zerologon on host $i ${ENDCOLOUR}"
+ 	echo ""
+ 	nxc smb $i -u '' -p '' -M zerologon
  	echo "-----------------------------------------------------------------------------------------------"
+  	echo ""
+  	echo -e "${BLUE}Checking for nopac and printnightmare on host $i ${ENDCOLOUR}"
+   	echo ""
 	nxc smb $i -u $2 -p $3 -M nopac -M printnightmare
  	echo "-----------------------------------------------------------------------------------------------"
 done
