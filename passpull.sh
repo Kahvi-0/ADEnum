@@ -38,10 +38,17 @@ done
 # can we read the fine grained pwd policy ?
 
 echo ""
-echo "==========================================="
+echo "========================================================"
 echo "Checking if we can read the fine grain password policies" 
-echo "==========================================="
+echo "========================================================"
 echo ""
 
 ldapsearch -x -b $base -H ldap://$i:389/  -D $5 -w $2 'msDS-LockoutThreshold=*' | grep -E 'cn:|msDS*.Password|Lockout|PSOAppliesTo'
 rm base.txt
+
+echo ""
+echo "====================================================="
+echo "LDAP query for fine grain password policies using NXC"
+echo "====================================================="
+echo ""
+nxc ldap $3 -u $1 -p $2 -M pso
