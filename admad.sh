@@ -56,7 +56,7 @@ echo "--------------------------------------------------------------------------
 
 echo -e "${GREEN}Getting all DNS servers according to DC${ENDCOLOUR}"
 echo " "
-nxc ldap $target -u $2 -p $3 -M enum_dns | tee ADDNS.txt
+nxc smb $target -u $2 -p $3 -M enum_dns | tee ADDNS.txt
 echo "-----------------------------------------------------------------------------------------------"
 
 echo -e "${GREEN}Getting all accounts where Pwd not required${ENDCOLOUR}"
@@ -87,8 +87,11 @@ echo ""
 filename=$(cat dcs.txt)
 for i in $filename; do
 	nxc smb $i -u '' -p '' -M zerologon
+ 	echo "-----------------------------------------------------------------------------------------------"
 	nxc smb $i -u $2 -p $3 -M nopac
+ 	echo "-----------------------------------------------------------------------------------------------"
 	nxc smb $i -u $2 -p $3 -M printnightmare
+ 	echo "-----------------------------------------------------------------------------------------------"
 done
 echo "-----------------------------------------------------------------------------------------------"
 
