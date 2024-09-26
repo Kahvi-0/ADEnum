@@ -43,7 +43,7 @@ echo -e "${BLUE}Use a tool such as certipy to check for ADCS vulns${ENDCOLOUR}"
 echo ""
 echo -e "${WHITE}If none are returned, it is still recommended to check using an alt method.${ENDCOLOUR}"
 echo ""
-nxc ldap $target -u $2 -p $3 -M ADCS
+nxc ldap $target -u $2 -p $3 -M adcs
 echo " "
 
 echo -e "${GREEN}Getting all accessible DCs based on the provided target${ENDCOLOUR}"
@@ -101,7 +101,7 @@ echo ""
 
 echo -e "${GREEN}Dumping all Domain Users${ENDCOLOUR}" 
 echo " " 
-nxc smb $target -u $2 -p $3 --users > i.txt && cat i.txt | sort -u | awk -F " " '{print$5}' | awk -F\\\\ '{print $2}' | grep -v "^$" > DomainUsers.txt && rm i.txt
+nxc smb $target -u $2 -p $3 --users > i.txt && cat i.txt | sort -u | awk -F " " '{print$5}' | grep -vE '[*]|[+]|-Username-' > DomainUsers.txt && rm i.txt
 echo " "
 
 echo -e "${GREEN}Dumping LDAP descriptions${ENDCOLOUR}"
