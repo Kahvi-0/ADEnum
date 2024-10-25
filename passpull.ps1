@@ -2,7 +2,8 @@
 function passpull {
     echo "--------------------------------"
     echo "Please enter the hostname for your target DC"
-    $DC = Read-Host
+    #$DC = Read-Host
+    $DC = $args[0]
     echo "--------------------------------"
     echo "Checking password policy, GPOs, and fine grain policies from: $env:Domaincontroller" 
     echo "--------------------------------"
