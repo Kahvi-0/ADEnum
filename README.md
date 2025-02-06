@@ -1,7 +1,7 @@
-## ADEnum
-
+# ADEnum
 Automated enumeration for basic AD checks
 
+Linux:
 ```
 wget https://raw.githubusercontent.com/Kahvi-0/ADEnum/main/admad.sh && chmod +x admad.sh
 ```
@@ -9,6 +9,14 @@ wget https://raw.githubusercontent.com/Kahvi-0/ADEnum/main/admad.sh && chmod +x 
 ```
 ./admad.sh [One DC] [username] [password]
 ```
+
+Windows:
+*For now, make sure powerview is in the same directory*
+```
+Import-Module .\ADEnum.ps1
+adenum
+```
+
 
 ## Netlooker (WIP)
 ```
