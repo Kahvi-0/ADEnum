@@ -1,5 +1,6 @@
 import-module .\PowerView.ps1
 
+
 function adenum {
     del log.txt 
     del DomainUsers.txt
@@ -25,10 +26,24 @@ function adenum {
     Write-Host "=======[Domain Trusts]==========" -ForegroundColor Red| Tee-Object -file log.txt 
     nltest /DOMAIN_TRUSTS /ALL_TRUSTS
     Write-Host "=======[Kerberoastable Users]==========" -ForegroundColor Red| Tee-Object -file log.txt 
-    Get-DomainUser -SPN | select name,serviceprincipalname
+    Get-DomainUser -SPN | select name,serviceprincipalname | Out-String  | Tee-Object -file log.txt 
     Write-Host "=======[ASREP roastable Users]==========" -ForegroundColor Red| Tee-Object -file log.txt 
-    Get-DomainUser -PreauthNotRequired | select name
+    Get-DomainUser -PreauthNotRequired | select name | Out-String | Tee-Object -file log.txt 
     Write-Host "=======[ADCS]==========" -ForegroundColor Red| Tee-Object -file log.txt 
-    Write-Host "To Do" -ForegroundColor Green| Tee-Object -file log.txt
+    Write-Host "To Do, for now use NXC or another tool <3" -ForegroundColor Green| Tee-Object -file log.txt
+    Write-Host "=======[LDAP Signing]==========" -ForegroundColor Red| Tee-Object -file log.txt 
+    Write-Host "To Do, for now use NXC or another tool <3" -ForegroundColor Green| Tee-Object -file log.txt
+    Write-Host "=======[Unconstrained Delegation]==========" -ForegroundColor Red| Tee-Object -file log.txt 
+    Get-DomainComputer -Unconstrained | format-list | Tee-Object -file log.txt 
+    Write-Host "=======[Constrained Delegation]==========" -ForegroundColor Red| Tee-Object -file log.txt 
+    Get-DomainUser -TrustedToAuth | select userprincipalname,msds-allowedtodelegateto | format-list | Tee-Object -file log.txt
+    Get-DomainComputer -TrustedToAuth | select name,msds-allowedtodelegateto | format-list | Tee-Object -file log.txt
+    Write-Host "=======[LAPS - To Add]==========" -ForegroundColor Red| Tee-Object -file log.txt 
+    Write-Host "TO DO"
+    Write-Host "=======[SCCM]==========" -ForegroundColor Red| Tee-Object -file log.txt
+    ([ADSISearcher]("objectClass=mSSMSManagementPoint")).FindAll() | % {$_.Properties} | Tee-Object -file log.txt
+    Write-Host "=======[MSSQL]==========" -ForegroundColor Red| Tee-Object -file log.txt
+    Get-DomainGroup -Identity *SQL* | % { Get-DomainGroupMember -Identity $_.distinguishedname | select groupname, membername } | Tee-Object -file log.txt
+
 
 }
