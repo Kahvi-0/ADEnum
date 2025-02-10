@@ -18,7 +18,13 @@ adenum
 ```
 
 
-## Netlooker (WIP)
+# Light Network vuln scan
+Windows
+```
+```
+
+
+Linux (To rework)
 ```
 https://raw.githubusercontent.com/Kahvi-0/ADEnum/main/netlooker.sh && chmod +x netlooker.sh
 ```
@@ -26,14 +32,12 @@ https://raw.githubusercontent.com/Kahvi-0/ADEnum/main/netlooker.sh && chmod +x n
 netlooker.sh [scope file] [user] [pwd]
 ```
 
-Automated network check for things such as MSSQL server (still working)
 
 To do:
 - Look for SCCM
 - Cleanup checks
 
 ## Passpull
-
 Automated enumeration of possible password policy locations 
 
 **Linux**
