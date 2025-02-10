@@ -2,8 +2,8 @@ import-module .\PowerView.ps1
 
 
 function adenum {
-    del log.txt 
-    del DomainUsers.txt
+    del log.txt -erroraction 'silentlycontinue'
+    del DomainUsers.txt -erroraction 'silentlycontinue'
     Write-Host "=====[Enumerating Domain Info]==========" -ForegroundColor Red | Tee-Object -file log.txt
     Get-Domain | Tee-Object -file log.txt
     Write-Host "=======[Enumerating Domain Users]==========" -ForegroundColor Red | Tee-Object -file log.txt
@@ -34,12 +34,12 @@ function adenum {
     Write-Host "=======[LDAP Signing]==========" -ForegroundColor Red| Tee-Object -file log.txt 
     Write-Host "To Do, for now use NXC or another tool <3" -ForegroundColor Green| Tee-Object -file log.txt
     Write-Host "=======[Unconstrained Delegation]==========" -ForegroundColor Red| Tee-Object -file log.txt 
-    Get-DomainComputer -Unconstrained | format-list | Tee-Object -file log.txt 
+    Get-DomainComputer -Unconstrained -Properties name,samaccountname,useraccountcontrol | format-list | Tee-Object -file log.txt 
     Write-Host "=======[Constrained Delegation]==========" -ForegroundColor Red| Tee-Object -file log.txt 
     Get-DomainUser -TrustedToAuth | select userprincipalname,msds-allowedtodelegateto | format-list | Tee-Object -file log.txt
     Get-DomainComputer -TrustedToAuth | select name,msds-allowedtodelegateto | format-list | Tee-Object -file log.txt
     Write-Host "=======[LAPS - To Add]==========" -ForegroundColor Red| Tee-Object -file log.txt 
-    Write-Host "TO DO"
+    ([adsisearcher]"(&(objectCategory=computer)(ms-MCS-AdmPwd=*)(sAMAccountName=*))").findAll() | ForEach-Object { $_.properties}
     Write-Host "=======[SCCM]==========" -ForegroundColor Red| Tee-Object -file log.txt
     ([ADSISearcher]("objectClass=mSSMSManagementPoint")).FindAll() | % {$_.Properties} | Tee-Object -file log.txt
     Write-Host "=======[MSSQL]==========" -ForegroundColor Red| Tee-Object -file log.txt
