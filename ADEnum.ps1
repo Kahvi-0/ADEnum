@@ -23,6 +23,8 @@ function adenum {
     $LDAP = "DC=" + $Domain.Split(".")
     $LDAP = $LDAP -replace " ", ",DC="
     (Get-DomainObject -Identity $LDAP -Properties ms-DS-MachineAccountQuota) | Select-Object -ExpandProperty ms-DS-MachineAccountQuota
+    #Non PV method, need to filter out other noise
+    #([adsisearcher]"(&(ms-DS-MachineAccountQuota=*))").findAll()| ForEach-Object { $_.properties}
     Write-Host "=======[Domain Trusts]==========" -ForegroundColor Red| Tee-Object -file log.txt 
     nltest /DOMAIN_TRUSTS /ALL_TRUSTS
     Write-Host "=======[Kerberoastable Users]==========" -ForegroundColor Red| Tee-Object -file log.txt 
