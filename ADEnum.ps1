@@ -38,7 +38,7 @@ function adenum {
     Write-Host "=======[Constrained Delegation]==========" -ForegroundColor Red| Tee-Object -file log.txt 
     Get-DomainUser -TrustedToAuth | select userprincipalname,msds-allowedtodelegateto | format-list | Tee-Object -file log.txt
     Get-DomainComputer -TrustedToAuth | select name,msds-allowedtodelegateto | format-list | Tee-Object -file log.txt
-    Write-Host "=======[LAPS - To Add]==========" -ForegroundColor Red| Tee-Object -file log.txt 
+    Write-Host "=======[LAPS]==========" -ForegroundColor Red| Tee-Object -file log.txt 
     ([adsisearcher]"(&(objectCategory=computer)(ms-MCS-AdmPwd=*)(sAMAccountName=*))").findAll() | ForEach-Object { $_.properties}
     Write-Host "=======[SCCM]==========" -ForegroundColor Red| Tee-Object -file log.txt
     ([ADSISearcher]("objectClass=mSSMSManagementPoint")).FindAll() | % {$_.Properties} | Tee-Object -file log.txt
