@@ -22,7 +22,7 @@ function passpull {
     # Fine Grain 
     echo ""
     echo "--------------------------------"
-    echo "Checking for fine grain policies"
+    echo "Checking for accounts with a fine grain policy applied"
     echo "--------------------------------"
     $Filter = "(msds-psoapplied=*)"
     $Searcher = New-Object DirectoryServices.DirectorySearcher
@@ -35,7 +35,7 @@ function passpull {
 
     echo ""
     echo "--------------------------------"
-    echo "Checking for fine grain policies"
+    echo "Checking for fine grain policy details (may require elevated privileges to see)"
     echo "--------------------------------"
     $Filter2 = "(msDS-LockoutThreshold=*)"
     $Searcher2 = New-Object DirectoryServices.DirectorySearcher
