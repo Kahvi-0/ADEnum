@@ -10,17 +10,9 @@ function adenum {
     ([adsisearcher]"(&(objectCategory=group)(name=protected users))").findAll() | ForEach-Object { $_.properties.name,$_.properties.member,""} | Tee-Object -file AD-Status.log
     Write-Host "=======[Enumerating Domain GPOs]==========" -ForegroundColor Red| Tee-Object -file AD-Status.log
     (New-Object DirectoryServices.DirectorySearcher "objectCategory=groupPolicyContainer").FindAll()| ForEach-Object { $_.Properties.displayname,$_.Properties.gpcfilesyspath,""} | Tee-Object -file AD-Status.log
-    Write-Host "=======[GPOs applied to current computer]==========" -ForegroundColor Red| Tee-Object -file AD-Status.log
-    #Get-DomainGPO -ComputerIdentity (hostname) | select displayname,gpcfilesyspath,objectcategory | format-list | Tee-Object -file log.txt
-    Write-Host "=======[GPOs applied to current user]==========" -ForegroundColor Red| Tee-Object -file AD-Status.log
-    $GUID = [guid]::New(([adsisearcher]"SamAccountName=$env:USERNAME").FindOne().Properties.objectguid[0]).Guid | Tee-Object -file AD-Status.log
-    echo "Still figuring a clean way to convert GUIDS" | Tee-Object -file AD-Status.log
-    ([adsisearcher]"(&(objectCategory=groupPolicyContainer))").findAll() | ForEach-Object { $_.properties.displayname,$_.properties.gpcmachineextensionnames,""} | Tee-Object -file AD-Status.log
-
-    #$user =[Environment]::UserName
-    #([adsisearcher]"(&(objectCategory=user)(name=$user))").findAll()
-    #[guid]::New(([adsisearcher]"SamAccountName=$env:COMPUTERNAME`$").FindOne().Properties.objectguid[0]).Guid
-    #[guid]::New(([adsisearcher]"SamAccountName=$env:USERNAME").FindOne().Properties.objectguid[0]).Guid
+    Write-Host "=======[GPOs applied to current user and computer]==========" -ForegroundColor Red| Tee-Object -file AD-Status.log
+    Write-Host "If you do not see the computer settings, elevate powershell to admin" -ForegroundColor Green| Tee-Object -file AD-Status.log
+    gpresult /r /f
     Write-Host "=======[Enumerating LDAP descriptions]==========" -ForegroundColor Red| Tee-Object -file AD-Status.log
     ([adsisearcher]"(&(objectCategory=user)(description=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.description,""} | Tee-Object -file AD-Status.log
     Write-Host "=======[Enumerating current user's MAQ]==========" -ForegroundColor Red| Tee-Object -file AD-Status.log
