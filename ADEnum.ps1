@@ -50,13 +50,17 @@ function adenum {
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=32))").findAll() | ForEach-Object { $_.properties.name}
     Write-Host "=======[Interdomain Trust: Accounts trusted for a system domain that trusts other domains.]==========" -ForegroundColor Red| Tee-Object -file log.txt
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=2048))").findAll() | ForEach-Object { $_.properties.name}
+    Write-Host "=======[GMSA Service]==========" -ForegroundColor Red| Tee-Object -file log.txt 
+    echo "Need to expand on later"
+    ([adsisearcher]"(&(objectClass=msDS-ManagedServiceAccount))").findAll() | ForEach-Object { $_.properties,""}
+    ([adsisearcher]"(&(PrincipalsAllowedToRetrieveManagedPassword=*))").findAll() | ForEach-Object { $_.properties,""}
     Write-Host "=======[LAPS]==========" -ForegroundColor Red| Tee-Object -file log.txt 
     ([adsisearcher]"(&(objectCategory=computer)(ms-MCS-AdmPwd=*)(sAMAccountName=*))").findAll() | ForEach-Object { $_.properties} | Tee-Object -file log.txt
     Write-Host "=======[SCCM]==========" -ForegroundColor Red| Tee-Object -file log.txt
     ([ADSISearcher]("objectClass=mSSMSManagementPoint")).FindAll() | % {$_.Properties} | Tee-Object -file log.txt
     Write-Host "=======[MSSQL]==========" -ForegroundColor Red| Tee-Object -file log.txt
-    #Still to do
-    #Get-DomainGroup -Identity *SQL* | % { Get-DomainGroupMember -Identity $_.distinguishedname | select groupname, membername } | Tee-Object -file log.txt
+    echo "Not perfect, computer accounts based off name. Sill enum via nmap with -sV"
+    ([adsisearcher]"(&(objectCategory=computer)(Name=*SQL*))").findAll() | ForEach-Object { $_.properties.name,""}
 
 
 }
