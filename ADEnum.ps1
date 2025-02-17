@@ -1,7 +1,10 @@
 function adenum {
+    $FormatEnumerationLimit=-1
     del log.txt -erroraction 'silentlycontinue'
     Write-Host "=====[Domain Controllers]==========" -ForegroundColor Red | Tee-Object -Append -file AD-Status.log
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=8192))").findAll() | ForEach-Object { $_.properties.name} | Tee-Object -Append -file AD-Status.log
+    Write-Host "=======[Domain Trusts]==========" -ForegroundColor Red| Tee-Object -Append -file AD-Status.log
+    nltest /DOMAIN_TRUSTS /ALL_TRUSTS | Tee-Object -Append -file AD-Status.log
     Write-Host "=======[Domain Users]==========" -ForegroundColor Red | Tee-Object -Append -file AD-Status.log
     (New-Object DirectoryServices.DirectorySearcher "objectcategory=user").FindAll() | ForEach-Object { $_.Properties.samaccountname } | Tee-Object -Append -file AD-Status.log
     Write-Host "=======[Domain Groups]==========" -ForegroundColor Red| Tee-Object -Append -file AD-Status.log
@@ -18,8 +21,22 @@ function adenum {
     Write-Host "=======[Enumerating current user's MAQ]==========" -ForegroundColor Red| Tee-Object -Append -file AD-Status.log
     echo "MAQ:" | Tee-Object -Append -file AD-Status.log
     (New-Object DirectoryServices.DirectorySearcher "ms-DS-MachineAccountQuota=*").FindAll() | ForEach-Object { $_.Properties.'ms-ds-machineaccountquota'} | Tee-Object -Append -file AD-Status.log
-    Write-Host "=======[Domain Trusts]==========" -ForegroundColor Red| Tee-Object -Append -file AD-Status.log
-    nltest /DOMAIN_TRUSTS /ALL_TRUSTS | Tee-Object -Append -file AD-Status.log
+    Write-Host "=======[Enumerating current user's MAQ]==========" -ForegroundColor Red| Tee-Object -Append -file AD-Status.log
+    ([adsisearcher]"(&(UserPassword=*))").findAll() | ForEach-Object { $_.properties,""}
+    Write-Host "=======[Users with the 'userPassword' attribute - in UTF-8 format]==========" -ForegroundColor Red| Tee-Object -Append -file AD-Status.log
+    ([adsisearcher]"(&(UserPassword=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.userpassword,""} | Tee-Object -Append -file AD-Status.log
+    Write-Host "=======[Users with the 'unicodePwd' attribute]==========" -ForegroundColor Red| Tee-Object -Append -file AD-Status.log
+    ([adsisearcher]"(&(unicodePwd=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.unicodepwd,""} | Tee-Object -Append -file AD-Status.log
+    Write-Host "=======[Users with the 'unixUserPassword' attribute]==========" -ForegroundColor Red| Tee-Object -Append -file AD-Status.log
+    ([adsisearcher]"(&(unixUserPassword=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.unixuserpassword,""} | Tee-Object -Append -file AD-Status.log
+    Write-Host "=======[Users with the 'msSFU30Password' attribute]==========" -ForegroundColor Red| Tee-Object -Append -file AD-Status.log
+    ([adsisearcher]"(&(msSFU30Password=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.mssfu30password,""} | Tee-Object -Append -file AD-Status.log
+    Write-Host "=======[Users with the 'orclCommonAttribute' attribute]==========" -ForegroundColor Red| Tee-Object -Append -file AD-Status.log
+    ([adsisearcher]"(&(orclCommonAttribute=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.orclcommonattribute,""} | Tee-Object -Append -file AD-Status.log
+    Write-Host "=======[Users with the 'defender-tokenData' attribute]==========" -ForegroundColor Red| Tee-Object -Append -file AD-Status.log
+    ([adsisearcher]"(&(defender-tokenData=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties."defender-tokendata",""} | Tee-Object -Append -file AD-Status.log
+    Write-Host "=======[Users with the 'dBCSPwd' attribute]==========" -ForegroundColor Red| Tee-Object -Append -file AD-Status.log
+    ([adsisearcher]"(&(dBCSPwd=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties."dbcspwd",""} | Tee-Object -Append -file AD-Status.log
     Write-Host "=======[Kerberoastable Users]==========" -ForegroundColor Red| Tee-Object -Append -file AD-Status.log
     ([adsisearcher]"(&(objectCategory=user)(servicePrincipalname=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.serviceprincipalname,""} | Tee-Object -Append -file AD-Status.log
     Write-Host "=======[ASREP roastable Users]==========" -ForegroundColor Red| Tee-Object -Append -file AD-Status.log
@@ -45,7 +62,7 @@ function adenum {
     ([adsisearcher]"(&(objectClass=msDS-ManagedServiceAccount))").findAll() | ForEach-Object { $_.properties,""} | Tee-Object -Append -file AD-Status.log
     ([adsisearcher]"(&(PrincipalsAllowedToRetrieveManagedPassword=*))").findAll() | ForEach-Object { $_.properties,""} | Tee-Object -Append -file AD-Status.log
     Write-Host "=======[LAPS]==========" -ForegroundColor Red| Tee-Object -Append -file AD-Status.log
-    ([adsisearcher]"(&(objectCategory=computer)(ms-MCS-AdmPwd=*)(sAMAccountName=*))").findAll() | ForEach-Object { $_.properties} | Tee-Object -Append -file AD-Status.log
+    ([adsisearcher]"(&(objectCategory=computer)(ms-MCS-AdmPwd=*)(sAMAccountName=*))").findAll() | ForEach-Object { $_.properties} | Tee-Object -Append -file AD-Status.log 
     Write-Host "=======[SCCM]==========" -ForegroundColor Red| Tee-Object -Append -file AD-Status.log
     ([ADSISearcher]("objectClass=mSSMSManagementPoint")).FindAll() | % {$_.Properties} | Tee-Object -Append -file AD-Status.log
     Write-Host "=======[MSSQL]==========" -ForegroundColor Red| Tee-Object -Append -file AD-Status.log
