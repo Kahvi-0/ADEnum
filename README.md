@@ -11,9 +11,8 @@ wget https://raw.githubusercontent.com/Kahvi-0/ADEnum/main/admad.sh && chmod +x 
 ```
 
 Windows:
-*For now, make sure powerview is in the same directory*
 ```
-Import-Module .\ADEnum.ps1
+IEX(New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/Kahvi-0/ADEnum/refs/heads/main/ADEnum.ps1')
 adenum
 ```
 
