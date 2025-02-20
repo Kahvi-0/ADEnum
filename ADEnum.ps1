@@ -2,6 +2,10 @@ function adenum {
     del AD-Status.log -erroraction 'silentlycontinue'
     Start-Transcript -Path .\AD-Status.log
     $FormatEnumerationLimit=-1
+    #Setup root
+    $domainRoot = [ADSI]"LDAP://RootDSE"
+    $baseDN = $domainRoot.defaultNamingContext
+    #
     Write-Host "=====[Domain Controllers]==========" -ForegroundColor Red 
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=8192))").findAll() | ForEach-Object { $_.properties.name} 
     Write-Host "=======[Domain Trusts]==========" -ForegroundColor Red
@@ -41,7 +45,7 @@ function adenum {
     Write-Host "=======[ASREP roastable Users]==========" -ForegroundColor Red
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=4194304))").findAll() | ForEach-Object { $_.properties.name} 
     Write-Host "=======[ADCS]==========" -ForegroundColor Red
-    $Root = [adsi] "LDAP://CN=Configuration,DC=lab,DC=local"
+    $Root = [adsi] "LDAP://CN=Configuration,$baseDN"
     $Searcher = new-object System.DirectoryServices.DirectorySearcher($root)
     $Searcher.filter = "(&(objectClass=pKIEnrollmentService))"
     $Searcher.FindAll() | ForEach-Object { "Hostname:", $_.properties.dnshostname,  "CA name:",$_.properties.displayname,  "Entrollment endpoints:", $_.properties."mspki-enrollment-servers", $_.properties."certificatetemplates", "" }
