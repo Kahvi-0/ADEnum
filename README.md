@@ -56,15 +56,8 @@ Example
 passpull.sh CoffeeLover 'p@ssword123' ./dcs.txt domain.local "CN=PENTEST,OU=USERS,OU=test,DC=lab,DC=LOCAL"
 ```
 
-**Powershell**
+**Powershell - Built into ADEnum**
 
-```
-IEX(New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/Kahvi-0/ADEnum/main/passpull.ps1')
-```
-
-```
-passpull [DC hostname]
-```
 
 
 ## LogHarvest
