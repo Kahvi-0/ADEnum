@@ -1,6 +1,6 @@
 function adenum {
     $FormatEnumerationLimit=-1
-    del log.txt -erroraction 'silentlycontinue'
+    del AD-Status.log -erroraction 'silentlycontinue'
     Write-Host "=====[Domain Controllers]==========" -ForegroundColor Red | Tee-Object -Append -file AD-Status.log
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=8192))").findAll() | ForEach-Object { $_.properties.name} | Tee-Object -Append -file AD-Status.log
     Write-Host "=======[Domain Trusts]==========" -ForegroundColor Red| Tee-Object -Append -file AD-Status.log
