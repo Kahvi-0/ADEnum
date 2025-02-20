@@ -42,7 +42,10 @@ function adenum {
     Write-Host "=======[ASREP roastable Users]==========" -ForegroundColor Red| Tee-Object -Append -file AD-Status.log
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=4194304))").findAll() | ForEach-Object { $_.properties.name} | Tee-Object -Append -file AD-Status.log
     Write-Host "=======[ADCS]==========" -ForegroundColor Red| Tee-Object -Append -file AD-Status.log
-    Write-Host "To Do, for now use NXC or another tool <3" -ForegroundColor Green| Tee-Object -Append -file AD-Status.log
+    $Root = [adsi] "LDAP://CN=Configuration,DC=lab,DC=local"
+    $Searcher = new-object System.DirectoryServices.DirectorySearcher($root)
+    $Searcher.filter = "(&(objectClass=pKIEnrollmentService))"
+    $Searcher.FindAll() | ForEach-Object { "Hostname:", $_.properties.dnshostname,  "CA name:",$_.properties.displayname,  "Entrollment endpoints:", $_.properties."mspki-enrollment-servers", $_.properties."certificatetemplates", "" }
     Write-Host "=======[LDAP Signing]==========" -ForegroundColor Red| Tee-Object -Append -file AD-Status.log
     Write-Host "To Do, for now use NXC or another tool <3" -ForegroundColor Green| Tee-Object -Append -file AD-Status.log
     Write-Host "=======[Unconstrained Delegation]==========" -ForegroundColor Red| Tee-Object -Append -file AD-Status.log
