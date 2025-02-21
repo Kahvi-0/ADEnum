@@ -104,7 +104,10 @@ function adenum {
         }
     }
     
-    Write-Host "=======[Permissions for DNS]==========" -ForegroundColor Green
+    Write-Host "=======[Permissions for DNS]==========" -ForegroundColor Red
+    Write-Host "Still in the works" -ForegroundColor Green
+    Write-Host "=======[Check for low priv users/groups with privs to update DNS]==========" -ForegroundColor Green
+    Write-Host "python3 ./dnstool.py -r 'UpdateTest' -a add --data 10.10.10.68 -u '' -p '' [DC IP]" -Backgroundcolor magenta
     $searchRoot = "LDAP://CN=MicrosoftDNS,CN=System,$baseDN"
     $searcher = New-Object DirectoryServices.DirectorySearcher
     $searcher.SearchRoot = [ADSI]$searchRoot
