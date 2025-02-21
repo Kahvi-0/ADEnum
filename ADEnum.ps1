@@ -75,8 +75,8 @@ function adenum {
     Write-Host "Not perfect, computer accounts based off name. Sill enum via nmap with -sV" -ForegroundColor Green
     ([adsisearcher]"(&(objectCategory=computer)(Name=*SQL*))").findAll() | ForEach-Object { $_.properties.name,""} 
     Write-Host "=======[DNS Dynamic Update Settings]==========" -BackgroundColor Red
-    Write-Host "Still in the works" -ForegroundColor Green
-    Write-Host "=======[Nonsecure and Secure = Anynoymous DNS updates]==========" -ForegroundColor Green
+    Write-Host "Still in the works - cannot pinpoint exact zone via LDAP yet" -ForegroundColor Yellow
+    Write-Host "Look for Nonsecure and Secure, this means Anynoymous DNS updates." -ForegroundColor Green
     Write-Host "python3 ./adddns.py --domain lab.local --dnsip [ADIDNS Server ip] --hostname [target hostname] --hostip [IP address to modify]" -Backgroundcolor magenta
     $dnsZones = ([ADSISearcher]("(&(objectClass=dnsZone))")).FindAll()
     foreach ($zone in $dnsZones) {
@@ -106,7 +106,7 @@ function adenum {
     }
     
     Write-Host "=======[Permissions for DNS]==========" -BackgroundColor Red
-    Write-Host "Still in the works" -ForegroundColor Green
+    Write-Host "Still in the works - cannot pinpoint the privs for each zone yet https://i.kym-cdn.com/entries/icons/original/000/041/998/Screen_Shot_2022-09-23_at_10.40.58_AM.jpg" -ForegroundColor Yellow
     Write-Host "=======[Check for low priv users/groups with privs to update DNS]==========" -ForegroundColor Green
     Write-Host "python3 ./dnstool.py -r 'UpdateTest' -a add --data 10.10.10.68 -u '' -p '' [DC IP]" -Backgroundcolor magenta
     $searchRoot = "LDAP://CN=MicrosoftDNS,CN=System,$baseDN"
