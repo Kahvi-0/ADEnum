@@ -5,7 +5,6 @@ function adenum {
     #Setup root
     $domainRoot = [ADSI]"LDAP://RootDSE"
     $baseDN = $domainRoot.defaultNamingContext
-    #
     Write-Host "=====[Domain Controllers]==========" -BackgroundColor Red 
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=8192))").findAll() | ForEach-Object { $_.properties.name} 
     Write-Host "=======[Domain Trusts]==========" -BackgroundColor Red
@@ -21,25 +20,27 @@ function adenum {
     Write-Host "=======[GPOs applied to current user and computer]==========" -BackgroundColor Red
     Write-Host "If you do not see the computer settings, elevate powershell to admin" -ForegroundColor Green
     gpresult /r /f
+    Write-Host ""
     Write-Host "=======[Enumerating LDAP descriptions]==========" -BackgroundColor Red
     ([adsisearcher]"(&(objectCategory=user)(description=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.description,""} 
     Write-Host "=======[Enumerating current user's MAQ]==========" -BackgroundColor Red
     echo "MAQ:" 
     (New-Object DirectoryServices.DirectorySearcher "ms-DS-MachineAccountQuota=*").FindAll() | ForEach-Object { $_.Properties.'ms-ds-machineaccountquota'} 
     Write-Host "=======[Enumerate dangerous user attributes (not exhaustive)==========" -BackgroundColor Red
-    Write-Host "=======[Users with the 'userPassword' attribute - in UTF-8 format]==========" -ForegroundColor Green
+    Write-Host "Need to look into the format of each, belive its in UTF-8 format" -ForegroundColor Green
+    Write-Host "Users with the 'userPassword' attribute" -ForegroundColor Green
     ([adsisearcher]"(&(UserPassword=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.userpassword,""} 
-    Write-Host "=======[Users with the 'unicodePwd' attribute]==========" -ForegroundColor Green
+    Write-Host "Users with the 'unicodePwd' attribute" -ForegroundColor Green
     ([adsisearcher]"(&(unicodePwd=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.unicodepwd,""} 
-    Write-Host "=======[Users with the 'unixUserPassword' attribute]==========" -ForegroundColor Green
+    Write-Host "Users with the 'unixUserPassword' attribute" -ForegroundColor Green
     ([adsisearcher]"(&(unixUserPassword=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.unixuserpassword,""} 
-    Write-Host "=======[Users with the 'msSFU30Password' attribute]==========" -ForegroundColor Green
+    Write-Host "Users with the 'msSFU30Password' attribute" -ForegroundColor Green
     ([adsisearcher]"(&(msSFU30Password=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.mssfu30password,""} 
-    Write-Host "=======[Users with the 'orclCommonAttribute' attribute]==========" -ForegroundColor Green
+    Write-Host "Users with the 'orclCommonAttribute' attribute" -ForegroundColor Green
     ([adsisearcher]"(&(orclCommonAttribute=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.orclcommonattribute,""} 
-    Write-Host "=======[Users with the 'defender-tokenData' attribute]==========" -ForegroundColor Green
+    Write-Host "Users with the 'defender-tokenData' attribute" -ForegroundColor Green
     ([adsisearcher]"(&(defender-tokenData=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties."defender-tokendata",""} 
-    Write-Host "=======[Users with the 'dBCSPwd' attribute]==========" -ForegroundColor Green
+    Write-Host "Users with the 'dBCSPwd' attribute" -ForegroundColor Green
     ([adsisearcher]"(&(dBCSPwd=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties."dbcspwd",""} 
     Write-Host "=======[Kerberoastable Users]==========" -BackgroundColor Red
     ([adsisearcher]"(&(objectCategory=user)(servicePrincipalname=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.serviceprincipalname,""} 
