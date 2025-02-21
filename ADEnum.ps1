@@ -103,6 +103,60 @@ function adenum {
             Write-Host "Domain: $zoneName | No dynamic update setting found."
         }
     }
+    
+    Write-Host "=======[Permissions for DNS]==========" -ForegroundColor Green
+    $searchRoot = "LDAP://CN=MicrosoftDNS,CN=System,$baseDN"
+    $searcher = New-Object DirectoryServices.DirectorySearcher
+    $searcher.SearchRoot = [ADSI]$searchRoot
+    $searcher.Filter = "(objectClass=dnsZone)"  # Filter for DNS zones
+    $searcher.PropertiesToLoad.Add("name") | Out-Null
+    $searcher.PropertiesToLoad.Add("nTSecurityDescriptor") | Out-Null  # Load security descriptor
+    $results = $searcher.FindAll()
+    Function Resolve-SID {
+        param([string]$sid)
+        Try {
+            $wellKnownSIDs = @{
+                "S-1-5-32-544" = "Administrators"
+                "S-1-5-32-545" = "Users"
+                "S-1-5-32-554" = "Enterprise Admins"
+                "S-1-5-32-550" = "Account Operators"
+                "S-1-5-32-551" = "Server Operators"
+                "S-1-5-32-552" = "Print Operators"
+                "S-1-5-32-553" = "Backup Operators"
+            }
+            if ($wellKnownSIDs.ContainsKey($sid)) {
+                return $wellKnownSIDs[$sid]
+            }
+            $objSID = New-Object System.Security.Principal.SecurityIdentifier($sid, 0)
+            $objUser = $objSID.Translate([System.Security.Principal.NTAccount])
+            return $objUser.Value
+        } Catch {
+            return $sid  # Return raw SID if resolution fails
+        }
+    }
+    
+    foreach ($result in $results) {
+        $zoneName = $result.Properties["name"][0]
+        $sd = $result.Properties["nTSecurityDescriptor"]
+        if ($sd) {
+            $rawSD = New-Object System.DirectoryServices.ActiveDirectorySecurity
+            $rawSD.SetSecurityDescriptorBinaryForm($sd[0])
+    
+            Write-Host "`nZone: $zoneName"
+            Write-Host "Permissions:"
+            $rawSD.Access | ForEach-Object {
+                # Resolve SID in IdentityReference to readable name
+                $resolvedIdentity = Resolve-SID $_.IdentityReference.ToString()
+                
+                Write-Host "  Identity: $resolvedIdentity"
+                Write-Host "  Rights: $($_.ActiveDirectoryRights)"
+                Write-Host "  Type: $($_.AccessControlType)"
+                Write-Host "--------------------------"
+            }
+        } else {
+            Write-Host "`nZone: $zoneName - No security descriptor found!"
+        }
+    }
 
     #Password policy enumeration
     ([adsisearcher]"(&(objectCategory=computer)(Name=*SQL*))").findAll() | ForEach-Object { $_.properties.name,""} 
