@@ -26,19 +26,20 @@ function adenum {
     Write-Host "=======[Enumerating current user's MAQ]==========" -BackgroundColor Red
     echo "MAQ:" 
     (New-Object DirectoryServices.DirectorySearcher "ms-DS-MachineAccountQuota=*").FindAll() | ForEach-Object { $_.Properties.'ms-ds-machineaccountquota'} 
-    Write-Host "=======[Users with the 'userPassword' attribute - in UTF-8 format]==========" -BackgroundColor Red
+    Write-Host "=======[Enumerate dangerous user attributes (not exhaustive)==========" -BackgroundColor Red
+    Write-Host "=======[Users with the 'userPassword' attribute - in UTF-8 format]==========" -ForegroundColor Green
     ([adsisearcher]"(&(UserPassword=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.userpassword,""} 
-    Write-Host "=======[Users with the 'unicodePwd' attribute]==========" -BackgroundColor Red
+    Write-Host "=======[Users with the 'unicodePwd' attribute]==========" -ForegroundColor Green
     ([adsisearcher]"(&(unicodePwd=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.unicodepwd,""} 
-    Write-Host "=======[Users with the 'unixUserPassword' attribute]==========" -BackgroundColor Red
+    Write-Host "=======[Users with the 'unixUserPassword' attribute]==========" -ForegroundColor Green
     ([adsisearcher]"(&(unixUserPassword=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.unixuserpassword,""} 
-    Write-Host "=======[Users with the 'msSFU30Password' attribute]==========" -BackgroundColor Red
+    Write-Host "=======[Users with the 'msSFU30Password' attribute]==========" -ForegroundColor Green
     ([adsisearcher]"(&(msSFU30Password=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.mssfu30password,""} 
-    Write-Host "=======[Users with the 'orclCommonAttribute' attribute]==========" -BackgroundColor Red
+    Write-Host "=======[Users with the 'orclCommonAttribute' attribute]==========" -ForegroundColor Green
     ([adsisearcher]"(&(orclCommonAttribute=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.orclcommonattribute,""} 
-    Write-Host "=======[Users with the 'defender-tokenData' attribute]==========" -BackgroundColor Red
+    Write-Host "=======[Users with the 'defender-tokenData' attribute]==========" -ForegroundColor Green
     ([adsisearcher]"(&(defender-tokenData=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties."defender-tokendata",""} 
-    Write-Host "=======[Users with the 'dBCSPwd' attribute]==========" -BackgroundColor Red
+    Write-Host "=======[Users with the 'dBCSPwd' attribute]==========" -ForegroundColor Green
     ([adsisearcher]"(&(dBCSPwd=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties."dbcspwd",""} 
     Write-Host "=======[Kerberoastable Users]==========" -BackgroundColor Red
     ([adsisearcher]"(&(objectCategory=user)(servicePrincipalname=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.serviceprincipalname,""} 
