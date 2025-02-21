@@ -73,6 +73,7 @@ function adenum {
     ([ADSISearcher]("objectClass=mSSMSManagementPoint")).FindAll() | % {$_.Properties} 
     Write-Host "=======[MSSQL]==========" -ForegroundColor Red
     Write-Host "Not perfect, computer accounts based off name. Sill enum via nmap with -sV" -ForegroundColor Green
+    ([adsisearcher]"(&(objectCategory=computer)(Name=*SQL*))").findAll() | ForEach-Object { $_.properties.name,""} 
     Write-Host "=======[DNS Dynamic Update Settings]==========" -ForegroundColor Red
     Write-Host "Still in the works" -ForegroundColor Green
     Write-Host "=======[Nonsecure and Secure = Anynoymous DNS updates]==========" -ForegroundColor Green
@@ -162,7 +163,6 @@ function adenum {
     }
 
     #Password policy enumeration
-    ([adsisearcher]"(&(objectCategory=computer)(Name=*SQL*))").findAll() | ForEach-Object { $_.properties.name,""} 
     #uses the first DC returned.
     $DC = ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=8192))").findOne() | ForEach-Object { $_.properties.name}
     echo ""
