@@ -73,11 +73,43 @@ function adenum {
     ([ADSISearcher]("objectClass=mSSMSManagementPoint")).FindAll() | % {$_.Properties} 
     Write-Host "=======[MSSQL]==========" -ForegroundColor Red
     Write-Host "Not perfect, computer accounts based off name. Sill enum via nmap with -sV" -ForegroundColor Green
+    Write-Host "=======[DNS Dynamic Update Settings]==========" -ForegroundColor Red
+    Write-Host "Still in the works" -ForegroundColor Green
+    Write-Host "=======[Nonsecure and Secure = Anynoymous DNS updates]==========" -ForegroundColor Green
+    Write-Host "python3 ./adddns.py --domain lab.local --dnsip [ADIDNS Server ip] --hostname [target hostname] --hostip [IP address to modify]" -Backgroundcolor magenta
+    $dnsZones = ([ADSISearcher]("(&(objectClass=dnsZone))")).FindAll()
+    foreach ($zone in $dnsZones) {
+        $properties = $zone.Properties
+        $zoneName = $properties["name"][0]  # Get the forward lookup zone name
+        Write-Host "`nForward Lookup Zone: $zoneName"
+        if ($properties.Contains("dnsproperty")) {
+            $dnsPropertyValues = $properties["dnsproperty"]
+            foreach ($value in $dnsPropertyValues) {
+                # Decode byte array to readable format
+                $decoded = [System.BitConverter]::ToString($value)
+                # Check if this entry contains dynamic update settings
+                if ($value.Length -ge 16) {
+                    $dynamicUpdateFlag = [BitConverter]::ToInt32($value, 16)  # Offset where dynamic update flag is stored
+                    $updateStatus = switch ($dynamicUpdateFlag) {
+                        0 { "None (No Dynamic Updates Allowed)" }
+                        1 { "Nonsecure and Secure" }
+                        2 { "Secure Only" }
+                        default { "Unknown" }
+                    }
+                    Write-Host "Domain: $zoneName | Dynamic Update Setting: $updateStatus"
+                }
+            }
+        } else {
+            Write-Host "Domain: $zoneName | No dynamic update setting found."
+        }
+    }
+
+    #Password policy enumeration
     ([adsisearcher]"(&(objectCategory=computer)(Name=*SQL*))").findAll() | ForEach-Object { $_.properties.name,""} 
     #uses the first DC returned.
     $DC = ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=8192))").findOne() | ForEach-Object { $_.properties.name}
     echo ""
-    Write-Host "Checking password policy, GPOs, and fine grain policies from: $DC" -ForegroundColor Red
+    Write-Host "=======[Checking password policy, GPOs, and fine grain policies from: $DC]==========" -ForegroundColor Red
     echo ""
     echo "Checking policy applied to current account" -ForegroundColor Green
     net accounts
