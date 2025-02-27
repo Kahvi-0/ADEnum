@@ -175,6 +175,71 @@ function adenum {
         }
     }
 
+
+    Write-Host "=======[Checking for accessible network shares]==========" -BackgroundColor Red
+    $user = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+    Write-Host "`nScanning network shares accessible to user: $user"
+    $computers = net view /domain:$env:USERDOMAIN 2>$null | ForEach-Object {
+        if ($_ -match "\\\\(.*)") { $matches[1] }
+    }
+    
+    if (-not $computers) {
+        $computers = (New-Object DirectoryServices.DirectorySearcher "objectcategory=computer").FindAll() | ForEach-Object { $_.Properties.cn }
+    }
+    
+    $accessibleShares = @()
+    
+    Function Test-Permissions {
+        param ($sharePath)
+    
+        $testFile = "$sharePath\testLetsNotOverwriteARealFile.tmp"
+        $readAccess = $false
+        $writeAccess = $false
+        try {
+            $files = Get-ChildItem -Path $sharePath -ErrorAction Stop
+            $readAccess = $true
+        } catch {}
+        try {
+            Set-Content -Path $testFile -Value "test" -ErrorAction Stop
+            Remove-Item -Path $testFile -ErrorAction Stop
+            $writeAccess = $true
+        } catch {}
+    
+        return [PSCustomObject]@{
+            ReadAccess  = $readAccess
+            WriteAccess = $writeAccess
+        }
+    }
+    foreach ($computer in $computers) {
+        Write-Host "Scanning $computer ..."
+        try {
+            $shares = Get-WmiObject -Query "SELECT * FROM Win32_Share" -ComputerName $computer -ErrorAction Stop
+            foreach ($share in $shares) {
+                $path = "\\$computer\$($share.Name)"
+                $name = $share.Name
+                if (Test-Path -Path $path) {
+                    $permissions = Test-Permissions -sharePath $path
+                    $accessibleShares += [PSCustomObject]@{
+                        Computer   = $computer
+                        ShareName  = $name
+                        Path       = $path
+                        ReadAccess = $permissions.ReadAccess
+                        WriteAccess = $permissions.WriteAccess
+                    }
+                }
+            }
+        } catch {
+            Write-Host "Could not retrieve shares from $computer"
+        }
+    }
+    if ($accessibleShares.Count -gt 0) {
+        Write-Host "`nAccessible Network Shares (including hidden) with Permissions:"
+        $accessibleShares | Format-Table -AutoSize
+    } else {
+        Write-Host "`nNo accessible shares found!"
+    }
+
+
     #Password policy enumeration
     #uses the first DC returned.
     echo ""
@@ -213,6 +278,7 @@ function adenum {
         {echo ""; $objResult2.Properties.cn; echo "User who this applies to"; $objResult2.Properties."msds-psoappliesto"; echo "Lockout Threshold"; $objResult2.Properties."msds-lockoutthreshold";echo "Min Password Length"; $objResult2.Properties."msds-minimumpasswordlength"; echo "Reversible Encryption Enabled?"; $objResult2.Properties."msds-passwordreversibleencryptionenabled"; echo "Min Password Age"; $objResult2.Properties."msds-minimumpasswordage"; echo "Password Complexity Enabled?"; $objResult2.Properties."msds-passwordcomplexityenabled"; echo "Password Settings Precedence"; $objResult2.Properties."msds-passwordsettingsprecedence"; echo "Max Password Age"; $objResult2.Properties."msds-maximumpasswordage"; echo "LockoutDuration"; $objResult2.Properties."msds-lockoutduration"; echo "Lockout Observation Window"; $objResult2.Properties."msds-lockoutobservationwindow"; echo "Password History Length"; $objResult2.Properties."msds-passwordhistorylength"; 
         Out-Null
         } 
+        
     Write-Output ""    
     Write-Output "-------------------------------------------"    
     Stop-Transcript
