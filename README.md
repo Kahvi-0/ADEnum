@@ -3,11 +3,11 @@ Automated enumeration for basic AD checks
 
 Linux:
 ```
-wget https://raw.githubusercontent.com/Kahvi-0/ADEnum/main/admad.sh && chmod +x admad.sh
+wget https://raw.githubusercontent.com/Kahvi-0/ADEnum/refs/heads/main/ADEnum.sh && chmod +x ADEnum.sh
 ```
 
 ```
-./admad.sh [One DC] [username] [password]
+./ADEnum.sh [One DC] [username] [password]
 ```
 
 Windows:
