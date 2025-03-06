@@ -27,15 +27,15 @@ $filteredLines = @()
 $keepIP = $false
 
 for ($i = 0; $i -lt $lines.Count; $i++) {
-    if ($lines[$i] -match '^=======\d{1,3}(\.\d{1,3}){3}=======$') {
+    if ($lines[$i] -match '^=.*=$') {
         $ipStart = $i
         $keepIP = $false
 
         for ($j = $i + 1; $j -lt $lines.Count; $j++) {
-            if ($lines[$j] -match '^=======\d{1,3}(\.\d{1,3}){3}=======$') {
+            if ($lines[$j] -match '^=.*=$') {
                 break  # Stop when another IP block is reached
             }
-            if ($lines[$j] -match '\bhttp\b') {
+            if ($lines[$j] -match '.*http.*') {
                 $keepIP = $true  # Mark as needed if HTTP is found
             }
         }
