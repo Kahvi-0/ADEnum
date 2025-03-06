@@ -21,7 +21,7 @@ foreach($line in Get-Content .\Alive-IPs.txt) {
 
 Stop-Transcript
 rm Alive-IPs.txt
-Get-Content InternalVulnScan.txt | Where-Object { $_ -match '^=======\d{1,3}(\.\d{1,3}){3}=======$' -or $_ -match 'http' } > InternalWebPorts1.txt
+Get-Content InternalVulnScan.txt | Where-Object { $_ -match '^=.*=$' -or $_ -match 'http' } > InternalWebPorts1.txt
 $lines = Get-Content InternalWebPorts1.txt
 $filteredLines = @()
 $keepIP = $false
@@ -55,7 +55,7 @@ $urls = @{}
 $currentIP = ""
 
 foreach ($line in $lines) {
-    if ($line -match '^=======(\d{1,3}(\.\d{1,3}){3})=======$') {
+    if ($line -match '^=.*=$') {
         $currentIP = $matches[1]
         if (-not $urls.ContainsKey($currentIP)) {
             $urls[$currentIP] = @()
