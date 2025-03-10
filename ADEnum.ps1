@@ -248,6 +248,44 @@ function adenum {
     }
 
 
+    echo ""
+    Write-Host "=======[Obsolete host enumeration]==========" -BackgroundColor Red
+    echo ""
+    $searcher = New-Object DirectoryServices.DirectorySearcher
+    $searcher.Filter = "(&(objectCategory=computer))"
+    $searcher.PropertiesToLoad.Add("cn") | Out-Null
+    $searcher.PropertiesToLoad.Add("operatingSystem") | Out-Null
+    $results = $searcher.FindAll()
+    $obsoletePatterns = @(
+        "Windows XP*", "Windows 7*", "Windows 8*", "Windows Server 2003*", 
+        "Windows Server 2008*", "Windows Server 2008 R2*"
+    )
+    $obsoleteHosts = @()
+    foreach ($result in $results) {
+        $hostname = $result.Properties.cn
+        $os = $result.Properties.operatingsystem
+    
+        if ($os) {
+            $osName = $os[0]
+            if ($obsoletePatterns | Where-Object { $osName -like $_ }) {
+                $obsoleteHosts += [PSCustomObject]@{
+                    ComputerName = $hostname[0]
+                    OS           = $osName
+                }
+            }
+        }
+    }
+    
+    if ($obsoleteHosts.Count -gt 0) {
+        Write-Host "`nObsolete OS found on these computers:"
+        $obsoleteHosts | Format-Table -AutoSize
+    } else {
+        Write-Host "`nNo obsolete OS found."
+    }
+
+
+
+
     #Password policy enumeration
     #uses the first DC returned.
     echo ""
