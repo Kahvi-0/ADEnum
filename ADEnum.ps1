@@ -177,14 +177,18 @@ function adenum {
 
 
     Write-Host "=======[Checking for accessible network shares]==========" -BackgroundColor Red
+    Write-Host "This may take a while" -ForegroundColor Green
     $user = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
-    Write-Host "`nScanning network shares accessible to user: $user"
+
+    
+    # Get list of domain computers
     $computers = net view /domain:$env:USERDOMAIN 2>$null | ForEach-Object {
         if ($_ -match "\\\\(.*)") { $matches[1] }
     }
     
     if (-not $computers) {
-        $computers = (New-Object DirectoryServices.DirectorySearcher "objectcategory=computer").FindAll() | ForEach-Object { $_.Properties.cn }
+        $computers = (New-Object DirectoryServices.DirectorySearcher "objectcategory=computer").FindAll() | 
+            ForEach-Object { $_.Properties.cn }
     }
     
     $accessibleShares = @()
@@ -210,28 +214,32 @@ function adenum {
             WriteAccess = $writeAccess
         }
     }
+    
     foreach ($computer in $computers) {
-        Write-Host "Scanning $computer ..."
-        try {
-            $shares = Get-WmiObject -Query "SELECT * FROM Win32_Share" -ComputerName $computer -ErrorAction Stop
-            foreach ($share in $shares) {
-                $path = "\\$computer\$($share.Name)"
-                $name = $share.Name
-                if (Test-Path -Path $path) {
-                    $permissions = Test-Permissions -sharePath $path
-                    $accessibleShares += [PSCustomObject]@{
-                        Computer   = $computer
-                        ShareName  = $name
-                        Path       = $path
-                        ReadAccess = $permissions.ReadAccess
-                        WriteAccess = $permissions.WriteAccess
+        if (Test-Connection -ComputerName $computer -Count 1 -Quiet) {
+            try {
+                $shares = Get-WmiObject -Query "SELECT * FROM Win32_Share" -ComputerName $computer -ErrorAction Stop
+                foreach ($share in $shares) {
+                    $path = "\\$computer\$($share.Name)"
+                    $name = $share.Name
+                    if (Test-Path -Path $path) {
+                        $permissions = Test-Permissions -sharePath $path
+                        $accessibleShares += [PSCustomObject]@{
+                            Computer   = $computer
+                            ShareName  = $name
+                            Path       = $path
+                            ReadAccess = $permissions.ReadAccess
+                            WriteAccess = $permissions.WriteAccess
+                        }
                     }
                 }
+            } catch {
+                Write-Host "Could not retrieve shares from $computer"
             }
-        } catch {
-            Write-Host "Could not retrieve shares from $computer"
+        } else {
         }
     }
+    
     if ($accessibleShares.Count -gt 0) {
         Write-Host "`nAccessible Network Shares (including hidden) with Permissions:"
         $accessibleShares | Format-Table -AutoSize
