@@ -175,24 +175,17 @@ function adenum {
         }
     }
 
-
     Write-Host "=======[Checking for accessible network shares]==========" -BackgroundColor Red
     Write-Host "This may take a while" -ForegroundColor Green
     $user = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
-
-    
-    # Get list of domain computers
     $computers = net view /domain:$env:USERDOMAIN 2>$null | ForEach-Object {
         if ($_ -match "\\\\(.*)") { $matches[1] }
     }
-    
     if (-not $computers) {
         $computers = (New-Object DirectoryServices.DirectorySearcher "objectcategory=computer").FindAll() | 
             ForEach-Object { $_.Properties.cn }
     }
-    
     $accessibleShares = @()
-    
     Function Test-Permissions {
         param ($sharePath)
     
@@ -214,7 +207,6 @@ function adenum {
             WriteAccess = $writeAccess
         }
     }
-    
     foreach ($computer in $computers) {
         if (Test-Connection -ComputerName $computer -Count 1 -Quiet) {
             try {
@@ -239,14 +231,12 @@ function adenum {
         } else {
         }
     }
-    
     if ($accessibleShares.Count -gt 0) {
         Write-Host "`nAccessible Network Shares (including hidden) with Permissions:"
         $accessibleShares | Format-Table -AutoSize
     } else {
         Write-Host "`nNo accessible shares found!"
     }
-
 
     echo ""
     Write-Host "=======[Obsolete host enumeration]==========" -BackgroundColor Red
@@ -277,7 +267,7 @@ function adenum {
     }
     
     if ($obsoleteHosts.Count -gt 0) {
-        Write-Host "`nObsolete OS found on these computers:"
+        Write-Host "`nObsolete OS found:"
         $obsoleteHosts | Format-Table -AutoSize
     } else {
         Write-Host "`nNo obsolete OS found."
