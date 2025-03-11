@@ -101,8 +101,8 @@ function adenum {
     Write-Host ""
     Write-Host "DNS Dynamic Update Settings" -ForegroundColor Green
     Write-Host "Still in the works - cannot pinpoint exact zone via LDAP yet" -ForegroundColor Yellow
-    Write-Host "To attempt to update your own host's IP to test:" -ForegroundColor Green
     Write-Host "Look for Nonsecure and Secure, this means Anynoymous DNS updates." -ForegroundColor Green
+    Write-Host "To attempt to update your own host's IP to test:" -ForegroundColor Green
     Write-Host "python3 ./adddns.py --domain lab.local --dnsip [ADIDNS Server ip] --hostname [target hostname] --hostip [IP address to modify]" -Backgroundcolor magenta
     $dnsZones = ([ADSISearcher]("(&(objectClass=dnsZone))")).FindAll()
     foreach ($zone in $dnsZones) {
