@@ -10,25 +10,34 @@ function adenum {
     Write-Host "=======[Domain Trusts]==========" -BackgroundColor Red
     nltest /DOMAIN_TRUSTS /ALL_TRUSTS 
     Write-Host "=======[Domain Users]==========" -BackgroundColor Red 
-    (New-Object DirectoryServices.DirectorySearcher "objectcategory=user").FindAll() | ForEach-Object { $_.Properties.samaccountname }
+    (New-Object DirectoryServices.DirectorySearcher "objectcategory=user").FindAll() | ForEach-Object { $_.Properties.samaccountname } |Tee-Object DomainUsers.txt
     Write-Host "=======[Domain Groups]==========" -BackgroundColor Red
     (New-Object DirectoryServices.DirectorySearcher "objectcategory=group").FindAll() | ForEach-Object { $_.Properties.samaccountname } 
     Write-Host "=======[Members of the protected users group]==========" -BackgroundColor Red
+    Write-Host "Accounts cannot be delegated" -Foregroundcolor Green
+    Write-Host "Forces Kerberos" -Foregroundcolor Green
+    Write-Host "Reduces credential lifetime (e.g. TGT lifetime is shortened to 4 hours)," -Foregroundcolor Green
+    Write-Host "Prevents caching of plaintext credentials or weaker hashes" -Foregroundcolor Green
     ([adsisearcher]"(&(objectCategory=group)(name=protected users))").findAll() | ForEach-Object { $_.properties.name,$_.properties.member,""} 
     Write-Host "=======[Accounts marked for No Delegation]==========" -BackgroundColor Red
+    Write-Host "Accounts cannot be delegated - No S4U for example" -Foregroundcolor Green
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=1048576))").findAll() | ForEach-Object { $_.properties.name} 
     Write-Host "=======[Accounts that require smart cards for interaction]==========" -BackgroundColor Red
+    Write-Host "Users must use a smart card to sign into the network" -Foregroundcolor Green
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=262144))").findAll() | ForEach-Object { $_.properties.name} 
     Write-Host "=======[Accounts where a password is not required]==========" -BackgroundColor Red
+    Write-Host "Attempt to authenticate to host with no password" -Foregroundcolor Green
+    Write-Host 'nxc smb -u Guest -p ""' -Backgroundcolor magenta
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=32))").findAll() | ForEach-Object { $_.properties.name} 
-    Write-Host "=======[Interdomain Trust: Accounts trusted for a system domain that trusts other domains.]==========" -BackgroundColor Red
+    Write-Host "=======[Interdomain Trust]==========" -BackgroundColor Red
+    Write-Host "Accounts trusted for a system domain that trusts other domains" -Foregroundcolor Green
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=2048))").findAll() | ForEach-Object { $_.properties.name} 
     Write-Host "=======[Enumerating LDAP descriptions]==========" -BackgroundColor Red
     ([adsisearcher]"(&(objectCategory=user)(description=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.description,""} 
     Write-Host "=======[Enumerating current user's MAQ]==========" -BackgroundColor Red
     Write-Host "Number of computer accounts that your account can create" -ForegroundColor Green
-    echo "MAQ:" 
-    (New-Object DirectoryServices.DirectorySearcher "ms-DS-MachineAccountQuota=*").FindAll() | ForEach-Object { $_.Properties.'ms-ds-machineaccountquota'} 
+    $MAQcommand = (New-Object DirectoryServices.DirectorySearcher "ms-DS-MachineAccountQuota=*").FindAll() | ForEach-Object { $_.Properties.'ms-ds-machineaccountquota'}
+    echo "MAQ:$MAQcommand" 
     Write-Host "=======[Enumerating Domain GPOs]==========" -BackgroundColor Red
     (New-Object DirectoryServices.DirectorySearcher "objectCategory=groupPolicyContainer").FindAll()| ForEach-Object { $_.Properties.displayname,$_.Properties.gpcfilesyspath,""} 
     Write-Host "=======[GPOs applied to current user and computer]==========" -BackgroundColor Red
@@ -55,10 +64,10 @@ function adenum {
     Write-Host "Rubeus.exe kerberoast /format:hashcat /nowrap" -Backgroundcolor magenta
     ([adsisearcher]"(&(objectCategory=user)(servicePrincipalname=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.serviceprincipalname,""} 
     Write-Host "=======[ASREP roastable Users]==========" -BackgroundColor Red
-    Write-Host "Rubeus.exe asreproast /format:hashcat" -Backgroundcolor magenta
+    Write-Host "Rubeus.exe asreproast /format:hashcat /nowrap" -Backgroundcolor magenta
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=4194304))").findAll() | ForEach-Object { $_.properties.name} 
     Write-Host "=======[ADCS]==========" -BackgroundColor Red
-    Write-Host "Enumerate ADCS servers. Run with further tools" -ForegroundColor Green
+    Write-Host "Enumerate ADCS servers. Enumerate with further tools" -ForegroundColor Green
     Write-Host "Certify.exe find /vulnerable" -Backgroundcolor magenta
     $Root = [adsi] "LDAP://CN=Configuration,$baseDN"
     $Searcher = new-object System.DirectoryServices.DirectorySearcher($root)
@@ -67,8 +76,10 @@ function adenum {
     Write-Host "=======[LDAP Signing]==========" -BackgroundColor Red
     Write-Host "To Do, for now use NXC or another tool <3" -ForegroundColor Yellow
     Write-Host "=======[Unconstrained Delegation hosts]==========" -BackgroundColor Red
+    Write-Host "Machines / users that can impersonate any domain user domain wide" -ForegroundColor Green
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=524288))").findAll() | ForEach-Object { $_.properties.name} 
     Write-Host "=======[Constrained Delegation hosts]==========" -BackgroundColor Red
+    Write-Host "Machines / users that can impersonate any domain user on specified host/service" -ForegroundColor Green
     ([adsisearcher]"(&(msds-allowedtodelegateto=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties."msds-allowedtodelegateto",""} 
     Write-Host "=======[GMSA Service]==========" -BackgroundColor Red
     Write-Host "Need to expand on later" -ForegroundColor Green
@@ -77,6 +88,7 @@ function adenum {
     Write-Host "=======[LAPS]==========" -BackgroundColor Red
     ([adsisearcher]"(&(objectCategory=computer)(ms-MCS-AdmPwd=*)(sAMAccountName=*))").findAll() | ForEach-Object { $_.properties}  
     Write-Host "=======[SCCM]==========" -BackgroundColor Red
+    Write-Host "Enumerate SCCM servers. Enumerate with further tools" -ForegroundColor Green
     Write-Host "SharpSCCM.exe local site-info --no-banner" -Backgroundcolor magenta
     ([ADSISearcher]("objectClass=mSSMSManagementPoint")).FindAll() | % {$_.Properties} 
     Write-Host "=======[MSSQL]==========" -BackgroundColor Red
@@ -87,11 +99,11 @@ function adenum {
     Write-Host "=======[Permissions for DNS]==========" -BackgroundColor Red
     Write-Host "Still in the works - cannot pinpoint the privs for each zone yet https://i.kym-cdn.com/entries/icons/original/000/041/998/Screen_Shot_2022-09-23_at_10.40.58_AM.jpg" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "DNS Dynamic Update Settings" -BackgroundColor Green
+    Write-Host "DNS Dynamic Update Settings" -ForegroundColor Green
     Write-Host "Still in the works - cannot pinpoint exact zone via LDAP yet" -ForegroundColor Yellow
     Write-Host "To attempt to update your own host's IP to test:" -ForegroundColor Green
-    Write-Host "python3 ./adddns.py --domain lab.local --dnsip [ADIDNS Server ip] --hostname [target hostname] --hostip [IP address to modify]" -Backgroundcolor magenta
     Write-Host "Look for Nonsecure and Secure, this means Anynoymous DNS updates." -ForegroundColor Green
+    Write-Host "python3 ./adddns.py --domain lab.local --dnsip [ADIDNS Server ip] --hostname [target hostname] --hostip [IP address to modify]" -Backgroundcolor magenta
     $dnsZones = ([ADSISearcher]("(&(objectClass=dnsZone))")).FindAll()
     foreach ($zone in $dnsZones) {
         $properties = $zone.Properties
@@ -119,7 +131,7 @@ function adenum {
         }
     }
     
-
+    echo " "
     Write-Host "Low priv users/groups with privs to update DNS" -ForegroundColor Green
     Write-Host "python3 ./dnstool.py -r 'UpdateTest' -a add --data 10.10.10.68 -u '' -p '' [DC IP]" -Backgroundcolor magenta
     $searchRoot = "LDAP://CN=MicrosoftDNS,CN=System,$baseDN"
@@ -188,8 +200,7 @@ function adenum {
     $accessibleShares = @()
     Function Test-Permissions {
         param ($sharePath)
-    
-        $testFile = "$sharePath\testLetsNotOverwriteARealFile.tmp"
+        $testFile = "$sharePath\testLetsNotOverwriteARealFiles.tmp"
         $readAccess = $false
         $writeAccess = $false
         try {
@@ -201,7 +212,6 @@ function adenum {
             Remove-Item -Path $testFile -ErrorAction Stop
             $writeAccess = $true
         } catch {}
-    
         return [PSCustomObject]@{
             ReadAccess  = $readAccess
             WriteAccess = $writeAccess
@@ -210,19 +220,16 @@ function adenum {
     foreach ($computer in $computers) {
         if (Test-Connection -ComputerName $computer -Count 1 -Quiet) {
             try {
-                $shares = Get-WmiObject -Query "SELECT * FROM Win32_Share" -ComputerName $computer -ErrorAction Stop
+                $shares = net view \\$computer /all 2>$null | ForEach-Object { if ($_ -match "^(.*)\s+Disk") { $matches[1].Trim() } }
                 foreach ($share in $shares) {
-                    $path = "\\$computer\$($share.Name)"
-                    $name = $share.Name
-                    if (Test-Path -Path $path) {
-                        $permissions = Test-Permissions -sharePath $path
-                        $accessibleShares += [PSCustomObject]@{
-                            Computer   = $computer
-                            ShareName  = $name
-                            Path       = $path
-                            ReadAccess = $permissions.ReadAccess
-                            WriteAccess = $permissions.WriteAccess
-                        }
+                    $path = "\\$computer\$share"
+                    $name = $share
+                    $permissions = Test-Permissions -sharePath $path
+                    $accessibleShares += [PSCustomObject]@{
+                        Path       = $path
+                        ReadAccess = $permissions.ReadAccess
+                        WriteAccess = $permissions.WriteAccess
+
                     }
                 }
             } catch {
@@ -237,6 +244,7 @@ function adenum {
     } else {
         Write-Host "`nNo accessible shares found!"
     }
+
 
     echo ""
     Write-Host "=======[Obsolete host enumeration]==========" -BackgroundColor Red
@@ -318,5 +326,6 @@ function adenum {
     Write-Output ""    
     Write-Output "-------------------------------------------"    
     Stop-Transcript
+    Write-Output "List of domain users: DomainUsers.txt" 
     Write-Output "-------------------------------------------"
 }
