@@ -60,11 +60,11 @@ function adenum {
     ([adsisearcher]"(&(defender-tokenData=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties."defender-tokendata",""} 
     Write-Host "Users with the 'dBCSPwd' attribute" -ForegroundColor Green
     ([adsisearcher]"(&(dBCSPwd=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties."dbcspwd",""} 
-    Write-Host "=======[Kerberoastable Users]==========" -BackgroundColor Red
-    Write-Host "Rubeus.exe kerberoast /format:hashcat /nowrap" -Backgroundcolor magenta
+    Write-Host "=======[Kerb roeast Users]==========" -BackgroundColor Red
+    Write-Host "Rubeus.exe / nxc.exe" -Backgroundcolor magenta
     ([adsisearcher]"(&(objectCategory=user)(servicePrincipalname=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.serviceprincipalname,""} 
     Write-Host "=======[ASREP roastable Users]==========" -BackgroundColor Red
-    Write-Host "Rubeus.exe asreproast /format:hashcat /nowrap" -Backgroundcolor magenta
+    Write-Host "Rubeus.exe / nxc.exe" -Backgroundcolor magenta
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=4194304))").findAll() | ForEach-Object { $_.properties.name} 
     Write-Host "=======[ADCS]==========" -BackgroundColor Red
     Write-Host "Enumerate ADCS servers. Enumerate with further tools" -ForegroundColor Green
