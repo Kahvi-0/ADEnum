@@ -90,7 +90,7 @@ function adenum {
     Write-Host "=======[SCCM]==========" -BackgroundColor Red
     Write-Host "Enumerate SCCM servers. Enumerate with further tools" -ForegroundColor Green
     Write-Host "SharpSCCM.exe local site-info --no-banner" -Backgroundcolor magenta
-    ([ADSISearcher]("objectClass=mSSMSManagementPoint")).FindAll() | % {$_.Properties} 
+    ([ADSISearcher]("objectClass=mSSMSManagementPoint")).FindAll() | ForEach-Object { $_.properties.dnshostname,$_.properties.cn,$_.properties.mssmsmpname,""} 
     Write-Host "=======[MSSQL]==========" -BackgroundColor Red
     Write-Host "Not perfect, computer accounts based off name" -ForegroundColor Green
     Write-Host "Sill enum via nmap with -sV" -Backgroundcolor magenta
