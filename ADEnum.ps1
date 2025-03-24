@@ -21,7 +21,7 @@ function adenum {
     ([adsisearcher]"(&(objectCategory=group)(name=protected users))").findAll() | ForEach-Object { $_.properties.name,$_.properties.member,""} 
     Write-Host "=======[Accounts marked for No Delegation]==========" -BackgroundColor Red
     Write-Host "Accounts cannot be delegated - No S4U for example" -Foregroundcolor Green
-    ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=1048576))").findAll() | ForEach-Object { $_.properties.name} 
+    ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=1048576))").findAll() | ForEach-Object { $_.properties.samaccountname}
     Write-Host "=======[Accounts that require smart cards for interaction]==========" -BackgroundColor Red
     Write-Host "Users must use a smart card to sign into the network" -Foregroundcolor Green
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=262144))").findAll() | ForEach-Object { $_.properties.name} 
