@@ -256,7 +256,7 @@ function adenum {
     $results = $searcher.FindAll()
     $obsoletePatterns = @(
         "Windows XP*", "Windows 7*", "Windows 8*", "Windows Server 2003*", 
-        "Windows Server 2008*", "Windows Server 2008 R2*"
+        "Windows Server 2008*", "Windows Server 2012*", "Windows Vista*"
     )
     $obsoleteHosts = @()
     foreach ($result in $results) {
