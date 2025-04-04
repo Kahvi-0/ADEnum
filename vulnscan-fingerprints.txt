@@ -1,2 +1,2 @@
-check_mk::Navigate via browser, if no authentication this may reveal lots of system information.
+check_mk::check_mk - Navigate via browser, if no authentication this may reveal lots of system information.
 microsoft-ds::SMB
