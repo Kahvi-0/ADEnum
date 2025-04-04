@@ -73,8 +73,52 @@ function adenum {
     $Searcher = new-object System.DirectoryServices.DirectorySearcher($root)
     $Searcher.filter = "(&(objectClass=pKIEnrollmentService))"
     $Searcher.FindAll() | ForEach-Object { "Hostname:", $_.properties.dnshostname,  "CA name:",$_.properties.displayname,  "Entrollment endpoints:", $_.properties."mspki-enrollment-servers", $_.properties."certificatetemplates", "" }
-    Write-Host "=======[LDAP Signing]==========" -BackgroundColor Red
-    Write-Host "To Do, for now use NXC or another tool <3" -ForegroundColor Yellow
+    Write-Host "=======[LDAP Signing and channel binding]==========" -BackgroundColor Red
+    Write-Host "If you have any errors with channel binding, use NXC. Its a limitation in pwsh" -ForegroundColor Yellow
+    Add-Type -AssemblyName System.DirectoryServices.Protocols
+    $dcRecords = ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=8192))").findAll() | ForEach-Object { $_.properties.name}
+    foreach ($dc in $dcRecords) {
+        Write-Host "`n[$dc]"
+        try {
+            $rootDSE = [ADSI]"LDAP://$dc/RootDSE"
+            $ldapSigning = if ($rootDSE) {
+                "Signing Not Required (LDAP bind succeeded)"
+            } else {
+                "Signing Required (bind failed)"
+            }
+            $portCheck = Test-NetConnection -ComputerName $dc -Port 636 -WarningAction SilentlyContinue
+            $LDAPSPORT = "636"
+            if (-not $portCheck.TcpTestSucceeded) {
+                Write-Host "  LDAPS (port 636) not reachable on $dc, trying port 389"
+                $LDAPSPORT = "389"
+                continue
+            }
+            $cbStatus = try {
+                $identifier = New-Object System.DirectoryServices.Protocols.LdapDirectoryIdentifier($dc, $LDAPSPORT, $false, $false)
+                $connection = New-Object System.DirectoryServices.Protocols.LdapConnection($identifier)
+                $connection.AuthType = [System.DirectoryServices.Protocols.AuthType]::Negotiate
+                $connection.SessionOptions.SecureSocketLayer = $true
+                $connection.SessionOptions.ProtocolVersion = 3
+                $connection.Bind()
+                "[$dc] Channel Binding NOT Enforced (bind succeeded)"
+            }
+            catch {
+                $msg = $_.Exception.Message
+                if ($msg -like "*80090346*") {
+                    "[$dc] Channel binding is enforced"
+                } elseif ($msg -like "*52e*" -or $msg -like "*logon failure*") {
+                    "[$dc] Channel binding is NOT enforced"
+                } else {
+                    "[$dc] Unknown LDAPS error: $msg"
+                }
+            }
+            Write-Host "  LDAP Signing     : $ldapSigning"
+            Write-Host "  Channel Binding  : $cbStatus"
+        }
+        catch {
+            Write-Host "  Could not connect or retrieve RootDSE from $dc"
+        }
+    }
     Write-Host "=======[Unconstrained Delegation hosts]==========" -BackgroundColor Red
     Write-Host "Machines / users that can impersonate any domain user domain wide" -ForegroundColor Green
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=524288))").findAll() | ForEach-Object { $_.properties.name} 
@@ -130,7 +174,6 @@ function adenum {
             Write-Host "Domain: $zoneName | No dynamic update setting found."
         }
     }
-    
     echo " "
     Write-Host "Low priv users/groups with privs to update DNS" -ForegroundColor Green
     Write-Host "python3 ./dnstool.py -r 'UpdateTest' -a add --data 10.10.10.68 -u '' -p '' [DC IP]" -Backgroundcolor magenta
