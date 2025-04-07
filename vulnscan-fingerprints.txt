@@ -1,2 +1,4 @@
 check_mk::check_mk - Navigate via browser, if no authentication this may reveal lots of system information.
 microsoft-ds::SMB
+telnet::telnet - Check if unencrypted
+smtp::SMTP - Check if exchange or other and their known vulns, open relay, etc. 
