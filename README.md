@@ -1,5 +1,15 @@
-# ADEnum
-Automated enumeration for basic AD checks
+![image](https://github.com/user-attachments/assets/74db0dcf-668a-4106-95a7-57274fbd3d75)
+
+
+# ADEnum 
+## Active Directory Enumeration
+Windows:
+```
+IEX(New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/Kahvi-0/ADEnum/refs/heads/main/ADEnum.ps1')
+adenum
+```
+![ADEnum](https://github.com/user-attachments/assets/ec4171f6-ea5e-4523-9070-166d6c9a2005)
+
 
 Linux:
 ```
@@ -10,31 +20,15 @@ wget https://raw.githubusercontent.com/Kahvi-0/ADEnum/refs/heads/main/ADEnum.sh 
 ./ADEnum.sh [One DC] [username] [password]
 ```
 
-Windows:
-```
-IEX(New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/Kahvi-0/ADEnum/refs/heads/main/ADEnum.ps1')
-adenum
-```
 
 
-# Light Network vuln scan
-Windows
+# Vulnscan
+## Common service port scan, nmap scripts, common service checks, etc
+Windows - ensure that nmap is installed (may need to change the location in the script)
 ```
-```
-
-
-Linux (To rework)
-```
-https://raw.githubusercontent.com/Kahvi-0/ADEnum/main/netlooker.sh && chmod +x netlooker.sh
-```
-```
-netlooker.sh [scope file] [user] [pwd]
+vulnscan.ps1 scope.txt
 ```
 
-
-To do:
-- Look for SCCM
-- Cleanup checks
 
 ## Passpull
 Automated enumeration of possible password policy locations 
@@ -55,10 +49,6 @@ Example
 ```
 passpull.sh CoffeeLover 'p@ssword123' ./dcs.txt domain.local "CN=PENTEST,OU=USERS,OU=test,DC=lab,DC=LOCAL"
 ```
-
-**Powershell - Built into ADEnum**
-
-
 
 ## LogHarvest
 Inspired by: https://practicalsecurityanalytics.com/extracting-credentials-from-windows-logs/
