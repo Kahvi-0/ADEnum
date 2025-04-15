@@ -33,7 +33,7 @@ function adenum {
     Write-Host "Accounts trusted for a system domain that trusts other domains" -Foregroundcolor Green
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=2048))").findAll() | ForEach-Object { $_.properties.name} 
     Write-Host "=======[Enumerating LDAP descriptions]==========" -BackgroundColor Red
-    ([adsisearcher]"(&(objectCategory=user)(description=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.description,""} 
+    ([adsisearcher]"(&(objectCategory=user)(description=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.description,""} |Tee-Object LDAPDescriptions.txt
     Write-Host "=======[Enumerating current user's MAQ]==========" -BackgroundColor Red
     Write-Host "Number of computer accounts that your account can create" -ForegroundColor Green
     $MAQcommand = (New-Object DirectoryServices.DirectorySearcher "ms-DS-MachineAccountQuota=*").FindAll() | ForEach-Object { $_.Properties.'ms-ds-machineaccountquota'}
