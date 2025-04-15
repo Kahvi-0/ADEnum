@@ -333,7 +333,7 @@ function adenum {
     Write-Host "=======[Checking password policy, GPOs, and fine grain policies from: $DC]==========" -BackgroundColor Red
     echo ""
     $DC = ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=8192))").findOne() | ForEach-Object { $_.properties.name}
-    echo "Checking policy applied to current account" -ForegroundColor Green
+    Write-Host "Checking policy applied to current account" -ForegroundColor Green
     net accounts
     echo ""
     Write-Host "Checking other policies" -ForegroundColor Green
