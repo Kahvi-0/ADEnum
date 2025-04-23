@@ -7,39 +7,52 @@ function adenum {
     $baseDN = $domainRoot.defaultNamingContext
     Write-Host "=====[Domain Controllers]==========" -BackgroundColor Red 
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=8192))").findAll() | ForEach-Object { $_.properties.name} 
+    Write-Output ""  
     Write-Host "=======[Domain Trusts]==========" -BackgroundColor Red
     nltest /DOMAIN_TRUSTS /ALL_TRUSTS 
+    Write-Output ""  
     Write-Host "=======[Domain Users]==========" -BackgroundColor Red 
     (New-Object DirectoryServices.DirectorySearcher "objectcategory=user").FindAll() | ForEach-Object { $_.Properties.samaccountname } |Tee-Object DomainUsers.txt
+    Write-Output ""  
     Write-Host "=======[Domain Groups]==========" -BackgroundColor Red
     (New-Object DirectoryServices.DirectorySearcher "objectcategory=group").FindAll() | ForEach-Object { $_.Properties.samaccountname } 
+    Write-Output ""  
     Write-Host "=======[Members of the protected users group]==========" -BackgroundColor Red
     Write-Host "Accounts cannot be delegated" -Foregroundcolor Green
     Write-Host "Forces Kerberos" -Foregroundcolor Green
     Write-Host "Reduces credential lifetime (e.g. TGT lifetime is shortened to 4 hours)," -Foregroundcolor Green
     Write-Host "Prevents caching of plaintext credentials or weaker hashes" -Foregroundcolor Green
+    Write-Output ""  
     ([adsisearcher]"(&(objectCategory=group)(name=protected users))").findAll() | ForEach-Object { $_.properties.name,$_.properties.member,""} 
+    Write-Output ""  
     Write-Host "=======[Accounts marked for No Delegation]==========" -BackgroundColor Red
     Write-Host "Accounts cannot be delegated - No S4U for example" -Foregroundcolor Green
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=1048576))").findAll() | ForEach-Object { $_.properties.samaccountname}
+    Write-Output ""  
     Write-Host "=======[Accounts that require smart cards for interaction]==========" -BackgroundColor Red
     Write-Host "Users must use a smart card to sign into the network" -Foregroundcolor Green
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=262144))").findAll() | ForEach-Object { $_.properties.name} 
+    Write-Output ""  
     Write-Host "=======[Accounts where a password is not required]==========" -BackgroundColor Red
     Write-Host "Attempt to authenticate to host with no password" -Foregroundcolor Green
     Write-Host 'nxc smb -u Guest -p ""' -Backgroundcolor magenta
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=32))").findAll() | ForEach-Object { $_.properties.name} 
+    Write-Output ""  
     Write-Host "=======[Interdomain Trust]==========" -BackgroundColor Red
     Write-Host "Accounts trusted for a system domain that trusts other domains" -Foregroundcolor Green
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=2048))").findAll() | ForEach-Object { $_.properties.name} 
+    Write-Output ""  
     Write-Host "=======[Enumerating LDAP descriptions]==========" -BackgroundColor Red
     ([adsisearcher]"(&(objectCategory=user)(description=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.description,""} |Tee-Object LDAPDescriptions.txt
+    Write-Output ""  
     Write-Host "=======[Enumerating current user's MAQ]==========" -BackgroundColor Red
     Write-Host "Number of computer accounts that your account can create" -ForegroundColor Green
     $MAQcommand = (New-Object DirectoryServices.DirectorySearcher "ms-DS-MachineAccountQuota=*").FindAll() | ForEach-Object { $_.Properties.'ms-ds-machineaccountquota'}
     echo "MAQ:$MAQcommand" 
+    Write-Output ""  
     Write-Host "=======[Enumerating Domain GPOs]==========" -BackgroundColor Red
     (New-Object DirectoryServices.DirectorySearcher "objectCategory=groupPolicyContainer").FindAll()| ForEach-Object { $_.Properties.displayname,$_.Properties.gpcfilesyspath,""} 
+    Write-Output ""  
     Write-Host "=======[GPOs applied to current user and computer]==========" -BackgroundColor Red
     Write-Host "If you do not see the computer settings, elevate powershell to admin" -ForegroundColor Green
     gpresult /r /f
@@ -48,24 +61,35 @@ function adenum {
     Write-Host "Need to look into the format of each, belive its in UTF-8 format" -ForegroundColor Green
     Write-Host "Users with the 'userPassword' attribute" -ForegroundColor Green
     ([adsisearcher]"(&(UserPassword=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.userpassword,""} 
+    Write-Output ""  
     Write-Host "Users with the 'unicodePwd' attribute" -ForegroundColor Green
     ([adsisearcher]"(&(unicodePwd=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.unicodepwd,""} 
+    Write-Output ""  
     Write-Host "Users with the 'unixUserPassword' attribute" -ForegroundColor Green
     ([adsisearcher]"(&(unixUserPassword=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.unixuserpassword,""} 
+    Write-Output ""  
     Write-Host "Users with the 'msSFU30Password' attribute" -ForegroundColor Green
     ([adsisearcher]"(&(msSFU30Password=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.mssfu30password,""} 
+    Write-Output ""  
     Write-Host "Users with the 'orclCommonAttribute' attribute" -ForegroundColor Green
     ([adsisearcher]"(&(orclCommonAttribute=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.orclcommonattribute,""} 
+    Write-Output ""  
     Write-Host "Users with the 'defender-tokenData' attribute" -ForegroundColor Green
     ([adsisearcher]"(&(defender-tokenData=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties."defender-tokendata",""} 
+    Write-Output ""  
     Write-Host "Users with the 'dBCSPwd' attribute" -ForegroundColor Green
     ([adsisearcher]"(&(dBCSPwd=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties."dbcspwd",""} 
+    Write-Output ""  
     Write-Host "=======[Kerb roeast Users]==========" -BackgroundColor Red
+    Write-Output ""  
     Write-Host "Rubeus.exe / nxc.exe" -Backgroundcolor magenta
     ([adsisearcher]"(&(objectCategory=user)(servicePrincipalname=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties.serviceprincipalname,""} 
+    Write-Output ""  
     Write-Host "=======[ASREP roastable Users]==========" -BackgroundColor Red
+    Write-Output ""  
     Write-Host "Rubeus.exe / nxc.exe" -Backgroundcolor magenta
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=4194304))").findAll() | ForEach-Object { $_.properties.name} 
+    Write-Output ""  
     Write-Host "=======[ADCS]==========" -BackgroundColor Red
     Write-Host "Enumerate ADCS servers. Enumerate with further tools" -ForegroundColor Green
     Write-Host "Certify.exe find /vulnerable" -Backgroundcolor magenta
@@ -73,6 +97,7 @@ function adenum {
     $Searcher = new-object System.DirectoryServices.DirectorySearcher($root)
     $Searcher.filter = "(&(objectClass=pKIEnrollmentService))"
     $Searcher.FindAll() | ForEach-Object { "Hostname:", $_.properties.dnshostname,  "CA name:",$_.properties.displayname,  "Entrollment endpoints:", $_.properties."mspki-enrollment-servers", $_.properties."certificatetemplates", "" }
+    Write-Output ""  
     Write-Host "=======[LDAP Signing and channel binding]==========" -BackgroundColor Red
     Write-Host "If you have any errors with channel binding, use NXC. Its a limitation in pwsh" -ForegroundColor Yellow
     Add-Type -AssemblyName System.DirectoryServices.Protocols
@@ -119,27 +144,71 @@ function adenum {
             Write-Host "  Could not connect or retrieve RootDSE from $dc"
         }
     }
+    Write-Output ""  
     Write-Host "=======[Unconstrained Delegation hosts]==========" -BackgroundColor Red
     Write-Host "Machines / users that can impersonate any domain user domain wide" -ForegroundColor Green
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=524288))").findAll() | ForEach-Object { $_.properties.name} 
+    Write-Output ""  
     Write-Host "=======[Constrained Delegation hosts]==========" -BackgroundColor Red
     Write-Host "Machines / users that can impersonate any domain user on specified host/service" -ForegroundColor Green
     ([adsisearcher]"(&(msds-allowedtodelegateto=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties."msds-allowedtodelegateto",""} 
+    Write-Output ""  
+    Write-Host "=======[Hosts with the RBCD attribute]==========" -BackgroundColor Red
+    Write-Output ""  
+    $searcher = New-Object System.DirectoryServices.DirectorySearcher
+    $searcher.SearchRoot = "LDAP://$baseDN"
+    $searcher.Filter = "(objectClass=computer)"
+    $searcher.PageSize = 1000
+    $searcher.PropertiesToLoad.Add("distinguishedName") | Out-Null
+    $searcher.PropertiesToLoad.Add("msDS-AllowedToActOnBehalfOfOtherIdentity") | Out-Null
+    $results = $searcher.FindAll()
+    foreach ($result in $results) {
+        $dn = $result.Properties["distinguishedname"][0]
+        $rbcd = $result.Properties["msds-allowedtoactonbehalfofotheridentity"]
+
+        if ($rbcd) {
+            try {
+                # Convert binary security descriptor to readable format
+                $sd = New-Object System.DirectoryServices.ActiveDirectorySecurity
+                $sd.SetSecurityDescriptorBinaryForm($rbcd[0])
+                $aces = $sd.GetAccessRules($true, $true, [System.Security.Principal.SecurityIdentifier])
+
+                Write-Host "`nComputer: $dn"
+                Write-Host "RBCD Allowed Principals:"
+
+                foreach ($ace in $aces) {
+                    $sid = $ace.IdentityReference
+                    try {
+                        $translated = $sid.Translate([System.Security.Principal.NTAccount])
+                        Write-Host " - $translated"
+                    } catch {
+                        Write-Host " - $sid (untranslated)"
+                    }
+                }
+
+            } catch {
+            }
+        }
+    }
+    Write-Output ""  
     Write-Host "=======[GMSA Service]==========" -BackgroundColor Red
     Write-Host "Need to expand on later" -ForegroundColor Green
     ([adsisearcher]"(&(objectClass=msDS-ManagedServiceAccount))").findAll() | ForEach-Object { $_.properties,""} 
     ([adsisearcher]"(&(PrincipalsAllowedToRetrieveManagedPassword=*))").findAll() | ForEach-Object { $_.properties,""} 
+    Write-Output ""  
     Write-Host "=======[LAPS]==========" -BackgroundColor Red
     ([adsisearcher]"(&(objectCategory=computer)(ms-MCS-AdmPwd=*)(sAMAccountName=*))").findAll() | ForEach-Object { $_.properties}  
+    Write-Output ""  
     Write-Host "=======[SCCM]==========" -BackgroundColor Red
     Write-Host "Enumerate SCCM servers. Enumerate with further tools" -ForegroundColor Green
     Write-Host "SharpSCCM.exe local site-info --no-banner" -Backgroundcolor magenta
     ([ADSISearcher]("objectClass=mSSMSManagementPoint")).FindAll() | ForEach-Object { $_.properties.dnshostname,$_.properties.cn,$_.properties.mssmsmpname,""} 
+    Write-Output ""  
     Write-Host "=======[MSSQL]==========" -BackgroundColor Red
     Write-Host "Not perfect, computer accounts based off name" -ForegroundColor Green
     Write-Host "Sill enum via nmap with -sV" -Backgroundcolor magenta
     ([adsisearcher]"(&(objectCategory=computer)(Name=*SQL*))").findAll() | ForEach-Object { $_.properties.name,""}
-
+    Write-Output ""  
     Write-Host "=======[Permissions for DNS]==========" -BackgroundColor Red
     Write-Host "Still in the works - cannot pinpoint the privs for each zone yet https://i.kym-cdn.com/entries/icons/original/000/041/998/Screen_Shot_2022-09-23_at_10.40.58_AM.jpg" -ForegroundColor Yellow
     Write-Host ""
@@ -174,7 +243,7 @@ function adenum {
             Write-Host "Domain: $zoneName | No dynamic update setting found."
         }
     }
-    echo " "
+    Write-Output ""  
     Write-Host "Low priv users/groups with privs to update DNS" -ForegroundColor Green
     Write-Host "python3 ./dnstool.py -r 'UpdateTest' -a add --data 10.10.10.68 -u '' -p '' [DC IP]" -Backgroundcolor magenta
     $searchRoot = "LDAP://CN=MicrosoftDNS,CN=System,$baseDN"
@@ -229,7 +298,42 @@ function adenum {
             Write-Host "`nZone: $zoneName - No security descriptor found!"
         }
     }
-
+    Write-Output ""  
+    Write-Host "=======[Obsolete host enumeration]==========" -BackgroundColor Red
+    Write-Output ""  
+    $searcher = New-Object DirectoryServices.DirectorySearcher
+    $searcher.Filter = "(&(objectCategory=computer))"
+    $searcher.PropertiesToLoad.Add("cn") | Out-Null
+    $searcher.PropertiesToLoad.Add("operatingSystem") | Out-Null
+    $results = $searcher.FindAll()
+    $obsoletePatterns = @(
+        "Windows XP*", "Windows 7*", "Windows 8*", "Windows Server 2003*", 
+        "Windows Server 2008*", "Windows Server 2012*", "Windows Vista*"
+    )
+    $obsoleteHosts = @()
+    foreach ($result in $results) {
+        $hostname = $result.Properties.cn
+        $os = $result.Properties.operatingsystem
+    
+        if ($os) {
+            $osName = $os[0]
+            if ($obsoletePatterns | Where-Object { $osName -like $_ }) {
+                $obsoleteHosts += [PSCustomObject]@{
+                    ComputerName = $hostname[0]
+                    OS           = $osName
+                }
+            }
+        }
+    }
+    
+    if ($obsoleteHosts.Count -gt 0) {
+        Write-Host "`nObsolete OS found:"
+        $obsoleteHosts | Format-Table -AutoSize
+    } else {
+        Write-Host "`nNo obsolete OS found."
+    }
+ 
+    Write-Output ""  
     Write-Host "=======[Checking for accessible network shares]==========" -BackgroundColor Red
     Write-Host "This may take a while" -ForegroundColor Green
     $user = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
@@ -268,12 +372,13 @@ function adenum {
                     $path = "\\$computer\$share"
                     $name = $share
                     $permissions = Test-Permissions -sharePath $path
-                    $accessibleShares += [PSCustomObject]@{
-                        Path       = $path
-                        ReadAccess = $permissions.ReadAccess
-                        WriteAccess = $permissions.WriteAccess
-
-                    }
+					if ($permissions.ReadAccess -or $permissions.WriteAccess) {
+					    $accessibleShares += [PSCustomObject]@{
+					        Path        = $path
+					        ReadAccess  = $permissions.ReadAccess
+					        WriteAccess = $permissions.WriteAccess
+					    }
+					}
                 }
             } catch {
                 Write-Host "Could not retrieve shares from $computer"
@@ -289,59 +394,22 @@ function adenum {
     }
 
 
-    echo ""
-    Write-Host "=======[Obsolete host enumeration]==========" -BackgroundColor Red
-    echo ""
-    $searcher = New-Object DirectoryServices.DirectorySearcher
-    $searcher.Filter = "(&(objectCategory=computer))"
-    $searcher.PropertiesToLoad.Add("cn") | Out-Null
-    $searcher.PropertiesToLoad.Add("operatingSystem") | Out-Null
-    $results = $searcher.FindAll()
-    $obsoletePatterns = @(
-        "Windows XP*", "Windows 7*", "Windows 8*", "Windows Server 2003*", 
-        "Windows Server 2008*", "Windows Server 2012*", "Windows Vista*"
-    )
-    $obsoleteHosts = @()
-    foreach ($result in $results) {
-        $hostname = $result.Properties.cn
-        $os = $result.Properties.operatingsystem
-    
-        if ($os) {
-            $osName = $os[0]
-            if ($obsoletePatterns | Where-Object { $osName -like $_ }) {
-                $obsoleteHosts += [PSCustomObject]@{
-                    ComputerName = $hostname[0]
-                    OS           = $osName
-                }
-            }
-        }
-    }
-    
-    if ($obsoleteHosts.Count -gt 0) {
-        Write-Host "`nObsolete OS found:"
-        $obsoleteHosts | Format-Table -AutoSize
-    } else {
-        Write-Host "`nNo obsolete OS found."
-    }
-
-
-
 
     #Password policy enumeration
     #uses the first DC returned.
-    echo ""
+    Write-Output ""  
     Write-Host "=======[Checking password policy, GPOs, and fine grain policies from: $DC]==========" -BackgroundColor Red
-    echo ""
+    Write-Output ""  
     $DC = ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=8192))").findOne() | ForEach-Object { $_.properties.name}
     Write-Host "Checking policy applied to current account" -ForegroundColor Green
     net accounts
-    echo ""
+    Write-Output ""  
     Write-Host "Checking other policies" -ForegroundColor Green
-    echo ""
+    Write-Output ""  
     Get-ChildItem \\$DC\sysvol\*\GptTmpl.inf -Recurse -erroraction 'silentlycontinue'  | select-string -Pattern ".*Bad.*|Password.*"  -AllMatches |  Format-Table -GroupBy Path -Property line
-    echo ""
+    Write-Output ""  
     Write-Host "Checking for accounts with a fine grain policy applied" -ForegroundColor Green
-    echo ""
+    Write-Output ""  
     $Filter = "(msds-psoapplied=*)"
     $Searcher = New-Object DirectoryServices.DirectorySearcher
     $Searcher.SearchRoot = New-Object System.DirectoryServices.DirectoryEntry("LDAP://$DC")
@@ -349,11 +417,11 @@ function adenum {
     $Searcher.SearchScope = "Subtree"
     $Result = $Searcher.FindAll()
     foreach ($objResult in $Result)
-        {echo ""; $objResult.Properties.givenname; $objResult.Properties."msds-psoapplied";}
+        {Write-Output ""  ; $objResult.Properties.givenname; $objResult.Properties."msds-psoapplied";}
 
-    echo ""
+    Write-Output ""  
     Write-Host "Checking for fine grain policy details (may require elevated privileges to see)" -ForegroundColor Green
-    echo ""
+    Write-Output ""  
     $Filter2 = "(msDS-LockoutThreshold=*)"
     $Searcher2 = New-Object DirectoryServices.DirectorySearcher
     $Searcher2.SearchRoot = New-Object System.DirectoryServices.DirectoryEntry("LDAP://$DC")
@@ -362,10 +430,11 @@ function adenum {
     $Searcher2.FindAll()
     $Result2 = $Searcher2.FindAll()
     foreach ($objResult2 in $Result2)
-        {echo ""; $objResult2.Properties.cn; echo "User who this applies to"; $objResult2.Properties."msds-psoappliesto"; echo "Lockout Threshold"; $objResult2.Properties."msds-lockoutthreshold";echo "Min Password Length"; $objResult2.Properties."msds-minimumpasswordlength"; echo "Reversible Encryption Enabled?"; $objResult2.Properties."msds-passwordreversibleencryptionenabled"; echo "Min Password Age"; $objResult2.Properties."msds-minimumpasswordage"; echo "Password Complexity Enabled?"; $objResult2.Properties."msds-passwordcomplexityenabled"; echo "Password Settings Precedence"; $objResult2.Properties."msds-passwordsettingsprecedence"; echo "Max Password Age"; $objResult2.Properties."msds-maximumpasswordage"; echo "LockoutDuration"; $objResult2.Properties."msds-lockoutduration"; echo "Lockout Observation Window"; $objResult2.Properties."msds-lockoutobservationwindow"; echo "Password History Length"; $objResult2.Properties."msds-passwordhistorylength"; 
+        {Write-Output ""  ; $objResult2.Properties.cn; echo "User who this applies to"; $objResult2.Properties."msds-psoappliesto"; echo "Lockout Threshold"; $objResult2.Properties."msds-lockoutthreshold";echo "Min Password Length"; $objResult2.Properties."msds-minimumpasswordlength"; echo "Reversible Encryption Enabled?"; $objResult2.Properties."msds-passwordreversibleencryptionenabled"; echo "Min Password Age"; $objResult2.Properties."msds-minimumpasswordage"; echo "Password Complexity Enabled?"; $objResult2.Properties."msds-passwordcomplexityenabled"; echo "Password Settings Precedence"; $objResult2.Properties."msds-passwordsettingsprecedence"; echo "Max Password Age"; $objResult2.Properties."msds-maximumpasswordage"; echo "LockoutDuration"; $objResult2.Properties."msds-lockoutduration"; echo "Lockout Observation Window"; $objResult2.Properties."msds-lockoutobservationwindow"; echo "Password History Length"; $objResult2.Properties."msds-passwordhistorylength"; 
         Out-Null
         } 
-        
+
+
     Write-Output ""    
     Write-Output "-------------------------------------------"    
     Stop-Transcript
