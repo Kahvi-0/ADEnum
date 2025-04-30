@@ -356,12 +356,12 @@ function adenum {
         $readAccess = $false
         $writeAccess = $false
         try {
-            $files = Get-ChildItem -Path $sharePath -ErrorAction Stop
+            $files = Get-ChildItem -Path $sharePath -ErrorAction SilentlyContinue
             $readAccess = $true
         } catch {}
         try {
-            Set-Content -Path $testFile -Value "test" -ErrorAction Stop
-            Remove-Item -Path $testFile -ErrorAction Stop
+            Set-Content -Path $testFile -Value "test" -ErrorAction SilentlyContinue
+            Remove-Item -Path $testFile -ErrorAction SilentlyContinue
             $writeAccess = $true
         } catch {}
         return [PSCustomObject]@{
