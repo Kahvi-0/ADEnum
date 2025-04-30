@@ -252,7 +252,12 @@ function adenum {
     $searcher.Filter = "(objectClass=dnsZone)"  # Filter for DNS zones
     $searcher.PropertiesToLoad.Add("name") | Out-Null
     $searcher.PropertiesToLoad.Add("nTSecurityDescriptor") | Out-Null  # Load security descriptor
+    try {
     $results = $searcher.FindAll()
+    } catch {
+    Write-Warning "LDAP search failed: $($_.Exception.Message)"
+    $results = @()  # Set to empty array so the script can continue
+    }
     Function Resolve-SID {
         param([string]$sid)
         Try {
