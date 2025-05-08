@@ -51,7 +51,7 @@ $urls = @{}
 $currentIP = ""
 
 foreach ($line in $lines) {
-    if ($line -match 'Nmap scan report for ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)') {
+    if ($line -match 'Nmap scan report for ([^ ]+)(?: \(([^)]+)\))?') {
         $currentIP = $matches[1]
         if (-not $urls.ContainsKey($currentIP)) {
             $urls[$currentIP] = @()
@@ -146,7 +146,6 @@ Remove-Item InternalUDPScan.txt -erroraction 'silentlycontinue'| Out-Null
 Remove-Item InternalTCPScan.txt -erroraction 'silentlycontinue'| Out-Null
 
 #output
-$sortedURLs | Set-Content InternalURLS.txt
 echo "" 
 echo "===Scan output saved to InternalVulnScan-TCP.txt==="
 echo ""
