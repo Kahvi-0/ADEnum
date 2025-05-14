@@ -147,7 +147,6 @@ function adenum {
     Write-Output ""  
     Write-Host "=======[Unconstrained Delegation hosts]==========" -BackgroundColor Red
     Write-Host "Machines / users that can impersonate any domain user domain wide" -ForegroundColor Green
-    Write-Host "Domain controllers are default and CAN be abused" -ForegroundColor Red
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=524288))").findAll() | ForEach-Object { $_.properties.name} 
     Write-Output ""  
     Write-Host "=======[Constrained Delegation hosts]==========" -BackgroundColor Red
