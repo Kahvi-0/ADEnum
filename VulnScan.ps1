@@ -12,7 +12,7 @@ C:\"Program Files (x86)"\Nmap\nmap.exe -sS -sV -Pn -T5 -iL Alive-IPs.txt --open 
 Get-Content vulnscan-nnmap.nmap | Select-String -Pattern 'scan initiated|Nmap done|Service detection performed|MAC Address:|Initiating NSE|NSE: Script|Completed NSE|Read data files|Nmap done:| Raw packets sent|Discovered open port|Starting Nmap|NSE: Loaded|Initiating ARP|Completed ARP|Completed Parallel|Initiating Parallel|Initiating SYN|Host is up|Scanning|Completed SYN|Not shown:|service unrecognized|^SF:|^SF-Port|^Service Info:|services unrecognized|NEXT SERVICE FINGERPRINT' -NotMatch > InternalTCPScan.txt
 echo ""
 echo "Doing UDP services check"
-C:\"Program Files (x86)"\Nmap\nmap.exe $line -p 161,623 --open -iL Alive-IPs.txt --script snmp-info,snmp-brute,ipmi-version,ipmi-brute,ipmi-cipher-zero -sU -oA vulnscan-UDP-nnmap | Out-Null
+C:\"Program Files (x86)"\Nmap\nmap.exe $line -p 161,623 --open -iL Alive-IPs.txt --script snmp-info,snmp-brute,ipmi-version,ipmi-cipher-zero -sU -oA vulnscan-UDP-nnmap | Out-Null
 Get-Content vulnscan-UDP-nnmap.nmap | Select-String -Pattern 'scan initiated|Nmap done|Service detection performed|MAC Address:|Initiating NSE|NSE: Script|Completed NSE|Read data files|Nmap done:| Raw packets sent|Discovered open port|Starting Nmap|NSE: Loaded|Initiating ARP|Completed ARP|Completed Parallel|Initiating Parallel|Initiating SYN|Host is up|Scanning|Completed SYN|Not shown:' -NotMatch > InternalUDPScan.txt
 
 Get-Content InternalTCPScan.txt | Where-Object { $_ -match '^Nmap scan report for' -or $_ -match '.*open.*http.*' } > InternalWebPorts1.txt
