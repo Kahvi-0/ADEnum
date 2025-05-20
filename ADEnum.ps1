@@ -9,15 +9,10 @@ function adenum {
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=8192))").findAll() | ForEach-Object { $_.properties.name} 
     Write-Output ""  
     Write-Host "=======[Domain Trusts]==========" -BackgroundColor Red
-    Write-Host "Check for bidirectonal trust, no SID filtering, TGT delegation permitted" -Foregroundcolor Green
-    Write-Host "More info: https://www.thehacker.recipes/ad/movement/trusts/" -Foregroundcolor Green
-    Write-Output "" 
     $domainObj = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
     $domainName = $domainObj.Name
     $netbiosName = $domainObj.NetBiosName
-    Write-Host "Checking trusts relative to $domainName ($netbiosName)" -Foregroundcolor Red
-    $domainRoot = [ADSI]"LDAP://RootDSE"
-    $baseDN = $domainRoot.defaultNamingContext
+    Write-Host "Checking trusts relative to $domainName ($netbiosName)" -BackgroundColor Red
     $localDomainPath = "LDAP://$baseDN"
     $localDomain = [ADSI]$localDomainPath
     Write-Host "`n[+] Local Domain:"
@@ -35,6 +30,7 @@ function adenum {
     $searcher.PropertiesToLoad.Add("trustType") | Out-Null
     $searcher.PropertiesToLoad.Add("trustAttributes") | Out-Null
     $searcher.PropertiesToLoad.Add("flatName") | Out-Null
+    $searcher.FindAll() | ForEach-Object { $_.Properties, ""}
     $results = $searcher.FindAll()
     foreach ($result in $results) {
         $props = $result.Properties
@@ -44,7 +40,6 @@ function adenum {
         $type = $props["trusttype"][0]
         $attributes = $props["trustattributes"][0]
         $flatName = $props["flatname"][0]
-
         $trustDirStr = switch ($direction) {
             0 { "Disabled" }
             1 { "Inbound" }
@@ -52,25 +47,37 @@ function adenum {
             3 { "Bidirectional" }
             default { "Unknown ($direction)" }
         }
-
-    # Determine trust type / flavor
-    $trustTypeStr = switch ($type) {
-        1 { "External (NT Domain)" }
-        2 { "Kerberos Realm" }
-        3 { "Forest Trust (AD)" }
-        default { "Unknown ($type)" }
-    }
-
-        $sidFiltering = ($attributes -band 0x10) -ne 0
-        $tgtDelegationRestricted = ($attributes -band 0x20000) -ne 0
+        $trustTypeStr = switch ($type) {
+            1 { "Windows domain not running AD - Downlevel: a trust with a domain that is running a version of Windows NT 4.0 or earlier." }
+            2 { "Windows domain running AD - Uplevel: a trust with a domain that is running Windows 2000 or later." }
+            3 { "Non-Windows with Kerberos - MIT: a trust with a non-Windows Kerberos realm, typically used for interoperability with UNIX-based systems running MIT Kerberos." }
+            4 { "DCE: not used in Windows. Would refer to trusts with a domain running DCE."}
+            5 { "ENTRA ID: the trusted domain is in Azure Active Directory. " }
+           default { "Unknown ($type)" }
+        }   
+        $trustAttributesStr = switch ($attributes) {
+            1 { "NON_TRANSITIVE - Trust is not transitive" }
+            2 { "UPLEVEL_ONLY - Only Windows 2000 and newer operating systems can use the trust" }
+            4 { "FILTER_SIDS - Domain is quarantined and subject to SID filtering" }
+            8 { "FOREST_TRANSITIVE - Cross forest trust between forests"}
+            16 { "CROSS_ORGANIZATION - Domain or forest is not part of the organization" }
+        	32 { "WITHIN_FOREST - Trusted domain is in the same forest" }
+        	64 { "TREAT_AS_EXTERNAL - Trust is treated as an external trust for SID filtering" }
+        	128 { "TRUST_USES_RC4_ENCRYPTION - Set when trustType is TRUST_TYPE_MIT, which can use RC4 keys" }
+        	512 { "TRUST_USES_AES_KEYS - Tickets under this trust are not trusted for delegation" }
+        	1024 { "CROSS_ORGANIZATION_NO_TGT_DELEGATION - Cross-forest trust to a domain is treated as Privileged Identity Management (PIM) trust for the purposes of SID filtering" }
+        	2048 { "PIM_TRUST - Tickets under this trust are trusted for delegation" }
+            default { "Unknown ($type)" }
+        }
         $isPrimary = ($flatName -eq $netbiosName) -or ($partner -eq $domainName)
         Write-Host "`nTrust Name (CN):              $cn"
         Write-Host "  Trust Partner:              $partner"
         Write-Host "  NetBIOS (Flat) Name:        $flatName"
         Write-Host "  Trust Direction:            $trustDirStr"
-        Write-Host "  Trust Type / Flavor:        $trustTypeStr"
-        Write-Host "  SID Filtering Enabled:      $sidFiltering"
-        Write-Host "  TGT Delegation Restricted:  $tgtDelegationRestricted"
+        Write-Host "  Trust Type:        $trustTypeStr"
+        Write-Host "  Trust Attribute:      $attributes - $trustAttributesStr"
+        Write-Host "Trust Attribute info: https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-adts/e9a2d23c-c31e-4a6f-88a0-6646fdb51a3c" -Foregroundcolor Green
+        Write-Host "SID filtering info: https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-pac/55fc19f2-55ba-4251-8a6a-103dd7c66280" -Foregroundcolor Green
         if ($isPrimary) {
             Write-Host "  * This appears to be the primary domain *"
         }
