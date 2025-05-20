@@ -19,7 +19,7 @@ function adenum {
     Write-Output ""  
     Write-Host "=======[Members of the protected users group]==========" -BackgroundColor Red
     Write-Host "Accounts cannot be delegated" -Foregroundcolor Green
-    Write-Host "Forces Kerberos" -Foregroundcolor Green
+    Write-Host "Forces Kerberos authentication (NTLM auth disabled)" -Foregroundcolor Green
     Write-Host "Reduces credential lifetime (e.g. TGT lifetime is shortened to 4 hours)," -Foregroundcolor Green
     Write-Host "Prevents caching of plaintext credentials or weaker hashes" -Foregroundcolor Green
     Write-Output ""  
