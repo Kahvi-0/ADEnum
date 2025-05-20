@@ -9,8 +9,8 @@ function adenum {
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=8192))").findAll() | ForEach-Object { $_.properties.name} 
     Write-Output ""  
     Write-Host "=======[Domain Trusts]==========" -BackgroundColor Red
-    Write-Host "Check for bidirectonal trust, no SID filtering, TGT delegation permitted" -BackgroundColor Green
-    Write-Host "More info: https://www.thehacker.recipes/ad/movement/trusts/" -BackgroundColor Green
+    Write-Host "Check for bidirectonal trust, no SID filtering, TGT delegation permitted" -Foregroundcolor Green
+    Write-Host "More info: https://www.thehacker.recipes/ad/movement/trusts/" -Foregroundcolor Green
     Write-Output "" 
     $domainObj = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
     $domainName = $domainObj.Name
