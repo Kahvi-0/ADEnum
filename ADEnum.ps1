@@ -9,7 +9,72 @@ function adenum {
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=8192))").findAll() | ForEach-Object { $_.properties.name} 
     Write-Output ""  
     Write-Host "=======[Domain Trusts]==========" -BackgroundColor Red
-    nltest /DOMAIN_TRUSTS /ALL_TRUSTS 
+    Write-Host "Check for bidirectonal trust, no SID filtering, TGT delegation permitted" -BackgroundColor Green
+    Write-Host "More info: https://www.thehacker.recipes/ad/movement/trusts/" -BackgroundColor Green
+    Write-Output "" 
+    $domainObj = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+    $domainName = $domainObj.Name
+    $netbiosName = $domainObj.NetBiosName
+    Write-Host "Checking trusts relative to $domainName ($netbiosName)" -BackgroundColor Red
+    $domainRoot = [ADSI]"LDAP://RootDSE"
+    $baseDN = $domainRoot.defaultNamingContext
+    $localDomainPath = "LDAP://$baseDN"
+    $localDomain = [ADSI]$localDomainPath
+    Write-Host "`n[+] Local Domain:"
+    Write-Host "  DNS Name:      $domainName"
+    Write-Host "  NetBIOS Name:  $netbiosName"
+    Write-Host "  This is the primary domain."
+    $trustContainerPath = "LDAP://CN=System,$baseDN"
+    $trustContainer = [ADSI]$trustContainerPath
+    $searcher = New-Object DirectoryServices.DirectorySearcher($trustContainer)
+    $searcher.Filter = "(objectClass=trustedDomain)"
+    $searcher.PageSize = 1000
+    $searcher.PropertiesToLoad.Add("cn") | Out-Null
+    $searcher.PropertiesToLoad.Add("trustPartner") | Out-Null
+    $searcher.PropertiesToLoad.Add("trustDirection") | Out-Null
+    $searcher.PropertiesToLoad.Add("trustType") | Out-Null
+    $searcher.PropertiesToLoad.Add("trustAttributes") | Out-Null
+    $searcher.PropertiesToLoad.Add("flatName") | Out-Null
+    $results = $searcher.FindAll()
+    foreach ($result in $results) {
+        $props = $result.Properties
+        $cn = $props["cn"][0]
+        $partner = $props["trustpartner"][0]
+        $direction = $props["trustdirection"][0]
+        $type = $props["trusttype"][0]
+        $attributes = $props["trustattributes"][0]
+        $flatName = $props["flatname"][0]
+
+        $trustDirStr = switch ($direction) {
+            0 { "Disabled" }
+            1 { "Inbound" }
+            2 { "Outbound" }
+            3 { "Bidirectional" }
+            default { "Unknown ($direction)" }
+        }
+
+    # Determine trust type / flavor
+    $trustTypeStr = switch ($type) {
+        1 { "External (NT Domain)" }
+        2 { "Kerberos Realm" }
+        3 { "Forest Trust (AD)" }
+        default { "Unknown ($type)" }
+    }
+
+        $sidFiltering = ($attributes -band 0x10) -ne 0
+        $tgtDelegationRestricted = ($attributes -band 0x20000) -ne 0
+        $isPrimary = ($flatName -eq $netbiosName) -or ($partner -eq $domainName)
+        Write-Host "`nTrust Name (CN):              $cn"
+        Write-Host "  Trust Partner:              $partner"
+        Write-Host "  NetBIOS (Flat) Name:        $flatName"
+        Write-Host "  Trust Direction:            $trustDirStr"
+        Write-Host "  Trust Type / Flavor:        $trustTypeStr"
+        Write-Host "  SID Filtering Enabled:      $sidFiltering"
+        Write-Host "  TGT Delegation Restricted:  $tgtDelegationRestricted"
+        if ($isPrimary) {
+            Write-Host "  * This appears to be the primary domain *"
+        }
+    }
     Write-Output ""  
     Write-Host "=======[Domain Users]==========" -BackgroundColor Red 
     (New-Object DirectoryServices.DirectorySearcher "objectcategory=user").FindAll() | ForEach-Object { $_.Properties.samaccountname } |Tee-Object DomainUsers.txt
@@ -339,66 +404,6 @@ function adenum {
     }
  
     Write-Output ""  
-    Write-Host "=======[Checking for accessible network shares]==========" -BackgroundColor Red
-    Write-Host "This may take a while" -ForegroundColor Green
-    $user = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
-    $computers = net view /domain:$env:USERDOMAIN 2>$null | ForEach-Object {
-        if ($_ -match "\\\\(.*)") { $matches[1] }
-    }
-    if (-not $computers) {
-        $computers = (New-Object DirectoryServices.DirectorySearcher "objectcategory=computer").FindAll() | 
-            ForEach-Object { $_.Properties.cn }
-    }
-    $accessibleShares = @()
-    Function Test-Permissions {
-        param ($sharePath)
-        $testFile = "$sharePath\testLetsNotOverwriteARealFiles.tmp"
-        $readAccess = $false
-        $writeAccess = $false
-        try {
-            $files = Get-ChildItem -Path $sharePath -ErrorAction SilentlyContinue
-            $readAccess = $true
-        } catch {}
-        try {
-            Set-Content -Path $testFile -Value "test" -ErrorAction SilentlyContinue
-            Remove-Item -Path $testFile -ErrorAction SilentlyContinue
-            $writeAccess = $true
-        } catch {}
-        return [PSCustomObject]@{
-            ReadAccess  = $readAccess
-            WriteAccess = $writeAccess
-        }
-    }
-    foreach ($computer in $computers) {
-        if (Test-Connection -ComputerName $computer -Count 1 -Quiet) {
-            try {
-                $shares = net view \\$computer /all 2>$null | ForEach-Object { if ($_ -match "^(.*)\s+Disk") { $matches[1].Trim() } }
-                foreach ($share in $shares) {
-                    $path = "\\$computer\$share"
-                    $name = $share
-                    $permissions = Test-Permissions -sharePath $path
-					if ($permissions.ReadAccess -or $permissions.WriteAccess) {
-					    $accessibleShares += [PSCustomObject]@{
-					        Path        = $path
-					        ReadAccess  = $permissions.ReadAccess
-					        WriteAccess = $permissions.WriteAccess
-					    }
-					}
-                }
-            } catch {
-                Write-Host "Could not retrieve shares from $computer"
-            }
-        } else {
-        }
-    }
-    if ($accessibleShares.Count -gt 0) {
-        Write-Host "`nAccessible Network Shares (including hidden) with Permissions:"
-        $accessibleShares | Format-Table -AutoSize
-    } else {
-        Write-Host "`nNo accessible shares found!"
-    }
-
-
 
     #Password policy enumeration
     #uses the first DC returned.
