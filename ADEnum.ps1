@@ -15,7 +15,7 @@ function adenum {
     $domainObj = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
     $domainName = $domainObj.Name
     $netbiosName = $domainObj.NetBiosName
-    Write-Host "Checking trusts relative to $domainName ($netbiosName)" -BackgroundColor Red
+    Write-Host "Checking trusts relative to $domainName ($netbiosName)" -Foregroundcolor Red
     $domainRoot = [ADSI]"LDAP://RootDSE"
     $baseDN = $domainRoot.defaultNamingContext
     $localDomainPath = "LDAP://$baseDN"
