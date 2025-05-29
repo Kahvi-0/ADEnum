@@ -84,7 +84,7 @@ function adenum {
     }
     Write-Output ""  
     Write-Host "=======[Domain Users]==========" -BackgroundColor Red 
-    (New-Object DirectoryServices.DirectorySearcher "objectcategory=user").FindAll() | ForEach-Object { $_.Properties.samaccountname } |Tee-Object DomainUsers.txt
+    (New-Object DirectoryServices.DirectorySearcher "objectcategory=user").FindAll() | ForEach-Object { $_.properties.samaccountname[0]} | Where-Object { $_ } | Set-Content DomainUsers.txt
     Write-Output ""  
     Write-Host "=======[Domain Groups]==========" -BackgroundColor Red
     (New-Object DirectoryServices.DirectorySearcher "objectcategory=group").FindAll() | ForEach-Object { $_.Properties.samaccountname } 
@@ -108,7 +108,7 @@ function adenum {
     Write-Host "=======[Accounts where a password is not required]==========" -BackgroundColor Red
     Write-Host "Attempt to authenticate to host with no password" -Foregroundcolor Green
     Write-Host 'nxc smb -u Guest -p ""' -Backgroundcolor magenta
-    ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=32))").findAll() | ForEach-Object { $_.properties.samaccountname} 
+    ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=32))").findAll() | ForEach-Object { $_.properties.samaccountname[0]} | Where-Object { $_ } | Set-Content PassNotReq.txt
     Write-Output ""  
     Write-Host "=======[Interdomain Trust]==========" -BackgroundColor Red
     Write-Host "Accounts trusted for a system domain that trusts other domains" -Foregroundcolor Green
