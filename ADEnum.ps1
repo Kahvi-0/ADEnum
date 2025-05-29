@@ -108,7 +108,7 @@ function adenum {
     Write-Host "=======[Accounts where a password is not required]==========" -BackgroundColor Red
     Write-Host "Attempt to authenticate to host with no password" -Foregroundcolor Green
     Write-Host 'nxc smb -u Guest -p ""' -Backgroundcolor magenta
-    ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=32))").findAll() | ForEach-Object { $_.properties.name} 
+    ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=32))").findAll() | ForEach-Object { $_.properties.samaccountname} 
     Write-Output ""  
     Write-Host "=======[Interdomain Trust]==========" -BackgroundColor Red
     Write-Host "Accounts trusted for a system domain that trusts other domains" -Foregroundcolor Green
