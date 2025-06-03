@@ -423,7 +423,7 @@ function adenum {
     Write-Output ""  
     Write-Host "Checking other policies" -ForegroundColor Green
     Write-Output ""  
-    Get-ChildItem \\$DC\sysvol\*\GptTmpl.inf -Recurse -erroraction 'silentlycontinue'  | select-string -Pattern ".*Bad.*|Password.*"  -AllMatches |  Format-Table -GroupBy Path -Property line
+    Get-ChildItem \\$DC\sysvol\*\GptTmpl.inf -Recurse -erroraction 'silentlycontinue'  | select-string -Pattern ".*Bad.*|Password.*|.*LockoutDuration.*|.*ResetLockout.*"  -AllMatches |  Format-Table -GroupBy Path -Property line
     Write-Output ""  
     Write-Host "Checking for accounts with a fine grain policy applied" -ForegroundColor Green
     Write-Output ""  
