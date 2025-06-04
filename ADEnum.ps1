@@ -412,6 +412,37 @@ function adenum {
  
     Write-Output ""  
 
+    Write-Host "=======[Checking for possible deny policies: $DC]==========" -BackgroundColor Red
+
+    Get-ChildItem \\DC1\sysvol\*\GptTmpl.inf -Recurse -ErrorAction SilentlyContinue |
+    Select-String -Pattern ".*Deny.*" -AllMatches |
+    Group-Object Path | ForEach-Object {
+        Write-Host "`n--- Policy File: $($_.Name) ---`n" -ForegroundColor Cyan
+    
+        $_.Group | ForEach-Object {
+            $line = $_.Line
+    
+            if ($line -match "^(.*?)\s*=\s*(.+)$") {
+                $right = $matches[1].Trim()
+                $sids = ($matches[2].Trim() -split ',') | ForEach-Object { $_.Trim() -replace '^\*', '' }
+    
+                foreach ($sid in $sids) {
+                    try {
+                        $translated = (New-Object System.Security.Principal.SecurityIdentifier($sid)).Translate([System.Security.Principal.NTAccount]).Value
+                    } catch {
+                        $translated = "Could not resolve: $sid"
+                    }
+    
+                    [PSCustomObject]@{
+                        LogonRight     = $right
+                        SID            = $sid
+                        TranslatedName = $translated
+                    }
+                }
+            }
+        } | Format-Table -AutoSize
+    }
+
     #Password policy enumeration
     #uses the first DC returned.
     Write-Output ""  
