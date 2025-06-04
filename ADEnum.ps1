@@ -414,7 +414,7 @@ function adenum {
 
     Write-Host "=======[Checking for possible deny policies: $DC]==========" -BackgroundColor Red
 
-    Get-ChildItem \\DC1\sysvol\*\GptTmpl.inf -Recurse -ErrorAction SilentlyContinue |
+    Get-ChildItem \\$DC\sysvol\*\GptTmpl.inf -Recurse -ErrorAction SilentlyContinue |
     Select-String -Pattern ".*Deny.*" -AllMatches |
     Group-Object Path | ForEach-Object {
         Write-Host "`n--- Policy File: $($_.Name) ---`n" -ForegroundColor Cyan
