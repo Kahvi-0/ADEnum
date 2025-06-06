@@ -125,6 +125,35 @@ function adenum {
     Write-Host "=======[Enumerating Domain GPOs]==========" -BackgroundColor Red
     (New-Object DirectoryServices.DirectorySearcher "objectCategory=groupPolicyContainer").FindAll()| ForEach-Object { $_.Properties.displayname,$_.Properties.gpcfilesyspath,""} 
     Write-Output ""  
+    Write-Host "=======[Checking for possible deny policies: $DC]==========" -BackgroundColor Red
+    Get-ChildItem \\$DC\sysvol\*\GptTmpl.inf -Recurse -ErrorAction SilentlyContinue |
+    Select-String -Pattern ".*Deny.*" -AllMatches |
+    Group-Object Path | ForEach-Object {
+        Write-Host "`n--- Policy File: $($_.Name) ---`n" -ForegroundColor Cyan
+    
+        $_.Group | ForEach-Object {
+            $line = $_.Line
+    
+            if ($line -match "^(.*?)\s*=\s*(.+)$") {
+                $right = $matches[1].Trim()
+                $sids = ($matches[2].Trim() -split ',') | ForEach-Object { $_.Trim() -replace '^\*', '' }
+    
+                foreach ($sid in $sids) {
+                    try {
+                        $translated = (New-Object System.Security.Principal.SecurityIdentifier($sid)).Translate([System.Security.Principal.NTAccount]).Value
+                    } catch {
+                        $translated = "Could not resolve: $sid"
+                    }
+    
+                    [PSCustomObject]@{
+                        LogonRight     = $right
+                        SID            = $sid
+                        TranslatedName = $translated
+                    }
+                }
+            }
+        } | Format-Table -AutoSize
+    }
     Write-Host "=======[GPOs applied to current user and computer]==========" -BackgroundColor Red
     Write-Host "If you do not see the computer settings, elevate powershell to admin" -ForegroundColor Green
     gpresult /r /f
@@ -411,38 +440,6 @@ function adenum {
     }
  
     Write-Output ""  
-
-    Write-Host "=======[Checking for possible deny policies: $DC]==========" -BackgroundColor Red
-
-    Get-ChildItem \\$DC\sysvol\*\GptTmpl.inf -Recurse -ErrorAction SilentlyContinue |
-    Select-String -Pattern ".*Deny.*" -AllMatches |
-    Group-Object Path | ForEach-Object {
-        Write-Host "`n--- Policy File: $($_.Name) ---`n" -ForegroundColor Cyan
-    
-        $_.Group | ForEach-Object {
-            $line = $_.Line
-    
-            if ($line -match "^(.*?)\s*=\s*(.+)$") {
-                $right = $matches[1].Trim()
-                $sids = ($matches[2].Trim() -split ',') | ForEach-Object { $_.Trim() -replace '^\*', '' }
-    
-                foreach ($sid in $sids) {
-                    try {
-                        $translated = (New-Object System.Security.Principal.SecurityIdentifier($sid)).Translate([System.Security.Principal.NTAccount]).Value
-                    } catch {
-                        $translated = "Could not resolve: $sid"
-                    }
-    
-                    [PSCustomObject]@{
-                        LogonRight     = $right
-                        SID            = $sid
-                        TranslatedName = $translated
-                    }
-                }
-            }
-        } | Format-Table -AutoSize
-    }
-
     #Password policy enumeration
     #uses the first DC returned.
     Write-Output ""  
