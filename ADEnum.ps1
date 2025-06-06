@@ -129,6 +129,7 @@ function adenum {
     (New-Object DirectoryServices.DirectorySearcher "objectCategory=groupPolicyContainer").FindAll()| ForEach-Object { $_.Properties.displayname,$_.Properties.gpcfilesyspath,""} 
     Write-Output ""  
     Write-Host "=======[Checking for possible deny policies: $DC]==========" -BackgroundColor Red
+    $DC = ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=8192))").findOne() | ForEach-Object { $_.properties.name}
     Get-ChildItem \\$DC\sysvol\*\GptTmpl.inf -Recurse -ErrorAction SilentlyContinue |
     Select-String -Pattern ".*Deny.*" -AllMatches |
     Group-Object Path | ForEach-Object {
