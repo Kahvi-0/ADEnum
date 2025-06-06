@@ -86,6 +86,7 @@ function adenum {
     Write-Output ""  
     Write-Host "=======[Domain Users]==========" -BackgroundColor Red 
     (New-Object DirectoryServices.DirectorySearcher "objectcategory=user").FindAll() | ForEach-Object { $_.properties.samaccountname[0]} | Where-Object { $_ } | Set-Content DomainUsers.txt
+    Write-Host "List of users saved to DomainUsers.txt" -Foregroundcolor Green
     Write-Output ""  
     Write-Host "=======[Domain Groups]==========" -BackgroundColor Red
     (New-Object DirectoryServices.DirectorySearcher "objectcategory=group").FindAll() | ForEach-Object { $_.Properties.samaccountname } 
@@ -110,7 +111,8 @@ function adenum {
     Write-Host "Attempt to authenticate to host with no password" -Foregroundcolor Green
     Write-Host 'nxc smb -u Guest -p ""' -Backgroundcolor magenta
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=32))").findAll() | ForEach-Object { $_.properties.samaccountname[0]} | Where-Object { $_ } | Set-Content PassNotReq.txt
-    Write-Output ""  
+    Write-Host "List of users saved to PassNotReq.txt" -Foregroundcolor Green
+    Write-Output ''
     Write-Host "=======[Interdomain Trust]==========" -BackgroundColor Red
     Write-Host "Accounts trusted for a system domain that trusts other domains" -Foregroundcolor Green
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=2048))").findAll() | ForEach-Object { $_.properties.name} 
@@ -485,5 +487,8 @@ function adenum {
     Write-Output "-------------------------------------------"    
     Stop-Transcript
     Write-Output "List of domain users: DomainUsers.txt" 
+    Write-Output "List of users that do not require a password: PassNotReq.txt" 
+    Write-Output "List of LDAP descriptions: LDAPDescriptions.txt" 
+    Write-Output "Full log: AD-Status.log"
     Write-Output "-------------------------------------------"
 }
