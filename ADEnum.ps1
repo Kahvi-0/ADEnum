@@ -1,4 +1,5 @@
 function adenum {
+    $ErrorActionPreference= 'silentlycontinue'
     del AD-Status.log -erroraction 'silentlycontinue'
     Start-Transcript -Path .\AD-Status.log
     $FormatEnumerationLimit=-1
