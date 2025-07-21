@@ -8,7 +8,7 @@ parser.add_argument("--user", help="Username to authenticate", required=True)
 parser.add_argument("--password", help="Password for the user", required=True)
 parser.add_argument("--server", help="LDAP server address", required=True)
 parser.add_argument("--domain", help="Target Domain", required=True)
-parser.add_argument("--port", type=int, help="LDAP port")
+parser.add_argument("--port", help="LDAP port", default="")
 parser.add_argument("--secure", help="LDAP port", default="ldap")
 args = parser.parse_args()
 
@@ -35,7 +35,7 @@ def get_kerberos_ticket(username: str, password: str) -> bool:
 # Configuration
 username = f"{args.user}"  # Use full UPN
 password = f"{args.password}"
-ldap_server = f"{args.secure}://{args.server}:{args.port}"
+ldap_server = f"{args.secure}://{args.server}{args.port}"
 base_dn = "DC=" + f"{args.domain}".replace(".", ",DC=")
 
 # Request Kerberos ticket
