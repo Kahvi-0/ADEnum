@@ -12,6 +12,8 @@ parser.add_argument("--port", help="LDAP port", default="")
 parser.add_argument("--secure", help="LDAP port", default="ldap")
 args = parser.parse_args()
 
+# Authentication
+
 def get_kerberos_ticket(username: str, password: str) -> bool:
     """
     Use kinit to obtain a Kerberos ticket using provided username and password.
@@ -33,7 +35,7 @@ def get_kerberos_ticket(username: str, password: str) -> bool:
 
 
 # Configuration
-username = f"{args.user}"  # Use full UPN
+username = f"{args.user}"
 password = f"{args.password}"
 ldap_server = f"{args.secure}://{args.server}{args.port}"
 base_dn = "DC=" + f"{args.domain}".replace(".", ",DC=")
@@ -46,14 +48,9 @@ if not get_kerberos_ticket(username, password):
 print("Connecting to LDAP over Kerberos (GSSAPI) ")
 
 server = Server(ldap_server, use_ssl=True, get_info=None)
-
 conn = Connection(server, authentication=SASL, sasl_mechanism=GSSAPI, auto_bind=True)
 
 # LDAP searches
-
-
-# Output results
-
 def domainControllers():
 	print("\n")
 	search_filter = '(userAccountControl:1.2.840.113556.1.4.803:=8192)'
