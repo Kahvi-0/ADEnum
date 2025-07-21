@@ -13,11 +13,22 @@ adenum
 
 Linux:
 ```
-wget https://raw.githubusercontent.com/Kahvi-0/ADEnum/refs/heads/main/ADEnum.sh && chmod +x ADEnum.sh
+wget https://raw.githubusercontent.com/Kahvi-0/ADEnum/refs/heads/main/ADEnum.py 
 ```
 
 ```
-./ADEnum.sh [One DC] [username] [password]
+sudo apt-get install -y libkrb5-dev
+pip install gssapi
+```
+
+```
+python3 ./ADEnum.py --user [user]@[Domain - uppercase] --password [password] --server [server]  --domain [domain]
+```
+
+#Example
+```
+python3 ./ADEnum.py --user administrator@LAB.LOCAL --password P@ssword! --server dc1.lab.local  --domain lab.local
+
 ```
 
 
