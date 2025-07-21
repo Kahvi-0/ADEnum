@@ -118,7 +118,7 @@ function adenum {
     ([adsisearcher]"(&(userAccountControl:1.2.840.113556.1.4.803:=2048))").findAll() | ForEach-Object { $_.properties.name} 
     Write-Output ""  
     Write-Host "=======[Enumerating LDAP descriptions]==========" -BackgroundColor Red
-    ([adsisearcher]"(&(objectCategory=user)(description=*))").findAll() | ForEach-Object { $_.properties.name[0],$_.properties.description[0],""} | Where-Object { $_ } | Set-Content LDAPDescriptions.txt
+    ([adsisearcher]"(&(objectCategory=*)(description=*))").findAll() | ForEach-Object { $_.properties.name[0],$_.properties.description[0],""} | Where-Object { $_ } | Set-Content LDAPDescriptions.txt
     Write-Output ""  
     Write-Host "=======[Enumerating current user's MAQ]==========" -BackgroundColor Red
     Write-Host "Number of computer accounts that your account can create" -ForegroundColor Green
