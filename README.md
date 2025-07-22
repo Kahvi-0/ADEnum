@@ -20,6 +20,7 @@ Requirements
 ```
 sudo apt-get install -y libkrb5-dev
 pip install gssapi
+pip install impacket
 https://www.netexec.wiki/getting-started/installation
 ```
 
