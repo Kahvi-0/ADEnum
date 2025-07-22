@@ -4,14 +4,7 @@ from ldap3 import Server, Connection, SASL, GSSAPI, SUBTREE, Tls
 import argparse
 import ssl
 from impacket.ldap import ldaptypes
-from impacket.dcerpc.v5.samr import (
-    UF_ACCOUNTDISABLE,
-    UF_DONT_REQUIRE_PREAUTH,
-    UF_TRUSTED_FOR_DELEGATION,
-    UF_TRUSTED_TO_AUTHENTICATE_FOR_DELEGATION,
-    UF_SERVER_TRUST_ACCOUNT,
-    SAM_MACHINE_ACCOUNT,
-)
+import fnmatch
 
 parser = argparse.ArgumentParser(description="Example LDAP tool")
 parser.add_argument("--user", help="Username to authenticate", required=True)
@@ -396,8 +389,6 @@ def hostsRBDC():
 	print("Machines / users that can impersonate any domain user on specified host/service")
 	for entry in conn.entries:
 	    print(f"\nHosts that have RBCD rights to: {entry.name}")
-	    rbcdRights = []
-	    rbcdObjType = []
 	    raw_sd = entry['msDS-AllowedToActOnBehalfOfOtherIdentity'].raw_values[0]
 	    sd = ldaptypes.SR_SECURITY_DESCRIPTOR(data=raw_sd)
 	    if len(sd["Dacl"].aces) > 0:
@@ -468,12 +459,24 @@ def dnsPermissions():
 
 def obsoleteHosts():
 	print("\n")
-	print("To do")
+	search_filter = '(objectCategory=computer)'
+	attributes = ['cn', 'operatingSystem']
+	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
+	print("=======[Obsolete host enumeration]==========")
+	print("Not perfect, computer accounts based off name")
+	print("Sill enum via nmap with -sV")
+	legacy_os_patterns = [
+	  "Windows XP*", "Windows 7*", "Windows 8*", "Windows Server 2003*",
+	  "Windows Server 2008*", "Windows Server 2012*", "Windows Vista*", "Windows 2000"]
+	for entry in conn.entries:
+	    os_name = str(entry.operatingSystem)
+	    if any(fnmatch.fnmatch(os_name, pattern) for pattern in legacy_os_patterns):
+               print(f"{entry.cn} - {os_name}")
 	return
 
 def passPolicy():
 	print("\n")
-	print("Checking password policy")
+	print("=======[Checking password policy, GPOs, and fine grain policies]==========")
 	print("To do")
 	return
 
