@@ -5,6 +5,7 @@ import argparse
 import ssl
 from impacket.ldap import ldaptypes
 import fnmatch
+import socket
 
 parser = argparse.ArgumentParser(description="Example LDAP tool")
 parser.add_argument("--user", help="Username to authenticate", required=True)
@@ -463,21 +464,53 @@ def obsoleteHosts():
 	attributes = ['cn', 'operatingSystem']
 	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
 	print("=======[Obsolete host enumeration]==========")
-	print("Not perfect, computer accounts based off name")
-	print("Sill enum via nmap with -sV")
+	print("Just pulled from LDAP")
 	legacy_os_patterns = [
 	  "Windows XP*", "Windows 7*", "Windows 8*", "Windows Server 2003*",
 	  "Windows Server 2008*", "Windows Server 2012*", "Windows Vista*", "Windows 2000"]
 	for entry in conn.entries:
 	    os_name = str(entry.operatingSystem)
+	    ip = socket.gethostbyname(f"{entry.cn}")
 	    if any(fnmatch.fnmatch(os_name, pattern) for pattern in legacy_os_patterns):
-               print(f"{entry.cn} - {os_name}")
+               print(f"{entry.cn} - {os_name} - {ip}")
 	return
 
 def passPolicy():
 	print("\n")
 	print("=======[Checking password policy, GPOs, and fine grain policies]==========")
-	print("To do")
+	base_dn = "DC=" + f"{args.domain}".replace(".", ",DC=")
+	search_filter = '(objectClass=domain)'
+	attributes = ['minPwdLength', 'pwdHistoryLength', 'maxPwdAge', 'minPwdAge', 'lockoutThreshold', 'lockoutDuration', 'lockoutObservationWindow', 'pwdProperties']
+	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
+	print("= Domain default =")
+	for entry in conn.entries:
+	    print(f"Min password length: {entry.minPwdLength}")
+	    print(f"Pass history length: {entry.pwdHistoryLength}")
+	    print(f"Max password age: {entry.maxPwdAge}")
+	    print(f"Min password age: {entry.minPwdAge}")
+	    print(f"Lockout Threshold: {entry.lockoutThreshold}")
+	    print(f"Lockout Duration: {entry.lockoutDuration}")
+	    print(f"Lockout Observation Window: {entry.lockoutObservationWindow}")
+	    print(f"Password Properties: {entry.pwdProperties}\n")
+	print("= Checking other GPOs - To add =\n")
+	print("= fine grain policies =")
+	base_dn = "CN=Password Settings Container,CN=System,DC=" + f"{args.domain}".replace(".", ",DC=")    
+	search_filter = '(objectClass=msDS-PasswordSettings)'
+	attributes = ['name', 'msDS-PasswordSettingsPrecedence', 'msDS-PasswordReversibleEncryptionEnabled', 'msDS-PasswordHistoryLength', 'msDS-PasswordComplexityEnabled', 'msDS-MinimumPasswordLength', 'msDS-MinimumPasswordAge', 'msDS-MaximumPasswordAge', 'msDS-LockoutThreshold', 'msDS-LockoutObservationWindow', 'msDS-LockoutDuration', 'msDS-PSOAppliesTo']
+	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
+	for entry in conn.entries:
+	    print(f"PasswordSettingsPrecedence {entry['msDS-PasswordSettingsPrecedence']}")
+	    print(f"PasswordReversibleEncryptionEnabled {entry['msDS-PasswordReversibleEncryptionEnabled']}")
+	    print(f"PasswordHistoryLength {entry['msDS-PasswordHistoryLength']}")
+	    print(f"PasswordComplexityEnabled {entry['msDS-PasswordComplexityEnabled']}")
+	    print(f"MinimumPasswordLength {entry['msDS-MinimumPasswordLength']}")
+	    print(f"MinimumPasswordAge {entry['msDS-MinimumPasswordAge']}")
+	    print(f"MaximumPasswordAge {entry['msDS-MaximumPasswordAge']}")
+	    print(f"LockoutThreshold {entry['msDS-LockoutThreshold']}")
+	    print(f"LockoutObservationWindow {entry['msDS-LockoutObservationWindow']}")
+	    print(f"LockoutDuration {entry['msDS-LockoutDuration']}")
+	    print(f"PSOAppliesTo {entry['msDS-PSOAppliesTo']}")
+	base_dn = "DC=" + f"{args.domain}".replace(".", ",DC=")
 	return
 
 # Call LDAP searches
