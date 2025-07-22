@@ -1,7 +1,17 @@
 import subprocess
 import os
-from ldap3 import Server, Connection, SASL, GSSAPI, SUBTREE, ALL
+from ldap3 import Server, Connection, SASL, GSSAPI, SUBTREE, Tls
 import argparse
+import ssl
+from impacket.ldap import ldaptypes
+from impacket.dcerpc.v5.samr import (
+    UF_ACCOUNTDISABLE,
+    UF_DONT_REQUIRE_PREAUTH,
+    UF_TRUSTED_FOR_DELEGATION,
+    UF_TRUSTED_TO_AUTHENTICATE_FOR_DELEGATION,
+    UF_SERVER_TRUST_ACCOUNT,
+    SAM_MACHINE_ACCOUNT,
+)
 
 parser = argparse.ArgumentParser(description="Example LDAP tool")
 parser.add_argument("--user", help="Username to authenticate", required=True)
@@ -11,6 +21,7 @@ parser.add_argument("--domain", help="Target Domain", required=True)
 parser.add_argument("--port", help="LDAP port", default="")
 parser.add_argument("--secure", help="LDAP port", default="ldap")
 args = parser.parse_args()
+
 
 # Authentication
 
@@ -34,11 +45,13 @@ def get_kerberos_ticket(username: str, password: str) -> bool:
         return False
 
 
-# Configuration
-username = f"{args.user}"
+# LDAP Configuration
+upperDomain = f"{args.domain}".upper()
+username = f"{args.user}@{upperDomain}"
 password = f"{args.password}"
 ldap_server = f"{args.secure}://{args.server}{args.port}"
 base_dn = "DC=" + f"{args.domain}".replace(".", ",DC=")
+
 
 # Request Kerberos ticket
 if not get_kerberos_ticket(username, password):
@@ -47,8 +60,9 @@ if not get_kerberos_ticket(username, password):
 #server = Server(ldap_server, get_info=ALL)
 print("Connecting to LDAP over Kerberos (GSSAPI) ")
 
-server = Server(ldap_server, use_ssl=True, get_info=None)
-conn = Connection(server, authentication=SASL, sasl_mechanism=GSSAPI, auto_bind=True)
+tls_config = Tls(validate=ssl.CERT_NONE)
+server = Server(ldap_server, use_ssl=True, get_info=None, tls=tls_config)
+conn = Connection(server, authentication=SASL, sasl_mechanism=GSSAPI, auto_bind=True, sasl_credentials=(None, None), read_only=True, receive_timeout=10, auto_referrals=True)
 
 # LDAP searches
 def domainControllers():
@@ -57,13 +71,70 @@ def domainControllers():
 	attributes = ['name']
 	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
 	print("==========[Domain Controllers]==========")
-	for entry in conn.entries:
-	    print(f"{entry.name}")
+	print("Saved to DCs.txt")
+	with open("DCs.txt", "w") as f:
+		for entry in conn.entries:
+		    print(f"{entry.name}")
+		    f.write(f"{entry.name}\n")
 	return
 
 def domainTrusts():
 	print("\n")
-	print("Domain Trusts")
+	search_filter = '(objectClass=trustedDomain)'
+	attributes = ['cn', 'trustPartner', 'trustDirection', 'trustType', 'trustAttributes', 'flatName']
+	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
+	
+	def translate_direction(value):
+	    value = str(value).strip()
+	    return {
+		"0": "Disabled",
+		"1": "Inbound",
+		"2": "Outbound",
+		"3": "Bidirectional"
+	    }.get(value, f"Unknown ({value})")
+	
+	def trustType(value):
+	    value = str(value).strip()
+	    return {
+		"1": "Windows domain not running AD - Downlevel: a trust with a domain that is running a version of Windows NT 4.0 or earlier.",
+		"2": "Windows domain running AD - Uplevel: a trust with a domain that is running Windows 2000 or later.",
+		"3": "Non-Windows with Kerberos - MIT: a trust with a non-Windows Kerberos realm, typically used for interoperability with UNIX-based systems running MIT Kerberos.",
+		"4": "DCE: not used in Windows. Would refer to trusts with a domain running DCE.",
+		"5": "ENTRA ID: the trusted domain is in Azure Active Directory."
+	    }.get(value, f"Unknown ({value})")	
+	
+	def trustAttributes(value):
+	    value = str(value).strip()
+	    return {
+		"1": "NON_TRANSITIVE - Trust is not transitive",
+		"2": "UPLEVEL_ONLY - Only Windows 2000 and newer operating systems can use the trust",
+		"4": "FILTER_SIDS - Domain is quarantined and subject to SID filtering",
+		"8": "FOREST_TRANSITIVE - Cross forest trust between forests",
+		"16": "CROSS_ORGANIZATION - Domain or forest is not part of the organization",
+		"32": "WITHIN_FOREST - Trusted domain is in the same forest",
+		"64": "TREAT_AS_EXTERNAL - Trust is treated as an external trust for SID filtering",
+		"128": "TRUST_USES_RC4_ENCRYPTION - Set when trustType is TRUST_TYPE_MIT, which can use RC4 keys",
+		"512": "TRUST_USES_AES_KEYS - Tickets under this trust are not trusted for delegation",
+		"1024": "CROSS_ORGANIZATION_NO_TGT_DELEGATION - Cross-forest trust to a domain is treated as Privileged Identity Management (PIM) trust for the purposes of SID filtering",
+		"2048": "PIM_TRUST - Tickets under this trust are trusted for delegation",
+	    }.get(value, f"Unknown ({value})")	
+	
+	
+	print("==========[Domain Trusts]==========")
+	for entry in conn.entries:
+	    print(f"{entry.cn}")
+	    print(f"{entry.flatName}")
+	    print(f"{entry.trustPartner}")
+	    direction_value = entry.trustDirection.value if entry.trustDirection else None
+	    direction = translate_direction(int(direction_value)) if direction_value is not None else "N/A"
+	    print(f"{direction}")
+	    trust_value = entry.trustType.value if entry.trustType else None
+	    trusttype = trustType(int(trust_value)) if trust_value is not None else "N/A"
+	    print(f"{trusttype}")
+	    Attributes_value = entry.trustAttributes.value if entry.trustAttributes else None
+	    attributes = trustAttributes(int(Attributes_value)) if Attributes_value is not None else "N/A"
+	    print(f"{attributes}")
+	    print("\n")
 	return
 	
 def domainUsers():
@@ -98,6 +169,7 @@ def memberProtectedUsers():
 	print("Forces Kerberos authentication (NTLM auth disabled)")
 	print("Reduces credential lifetime (e.g. TGT lifetime is shortened to 4 hours)")
 	print("Prevents caching of plaintext credentials or weaker hashes")
+	print(f"\n")
 	for entry in conn.entries:
 	    print(f"{entry.member}\n")
 	return
@@ -107,8 +179,9 @@ def noDelegation():
 	search_filter = '(userAccountControl:1.2.840.113556.1.4.803:=1048576)'
 	attributes = ['samaccountname']
 	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
-	print("Accounts marked for No Delegation")
+	print("=======[Accounts marked for No Delegation]==========")
 	print("Accounts cannot be delegated - No S4U for example")
+	print(f"\n")
 	for entry in conn.entries:
 	    print(f"{entry.samaccountname}")
 	return
@@ -120,6 +193,7 @@ def smartCards():
 	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
 	print("=======[Accounts that require smart cards for interaction]==========")
 	print("Users must use a smart card to sign into the network")
+	print(f"\n")
 	for entry in conn.entries:
 	    print(f"{entry.name}")
 	return
@@ -131,6 +205,7 @@ def noPassword():
 	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
 	print("=======[Accounts where a password is not required]==========")
 	print("Attempt to authenticate to host with no password")
+	print(f"\n")
 	print("Saved in NoPwdReq.txt")
 	with open("NoPwdReq.txt", "w") as f:
 		for entry in conn.entries:
@@ -144,6 +219,7 @@ def interdomainTrust():
 	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
 	print("=======[Interdomain Trust]==========")
 	print("Accounts trusted for a system domain that trusts other domains")
+	print(f"\n")
 	for entry in conn.entries:
 	    print(f"{entry.name}")
 	return
@@ -154,6 +230,7 @@ def ldapDescriptions():
 	attributes = ['sAMAccountName']
 	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
 	print("=======[Enumerating LDAP descriptions]==========")
+	print(f"\n")
 	print("Saved in ldapDescriptions.txt")
 	with open("ldapDescriptions.txt", "w") as f:
 		for entry in conn.entries:
@@ -167,26 +244,26 @@ def maq():
 	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
 	print("=======[Enumerating current user's MAQ]==========")
 	print("Number of computer accounts that your account can create")
+	print(f"\n")
 	for entry in conn.entries:
 	    print(f"MAQ: {entry['ms-DS-MachineAccountQuota']}")
 	return
 	
 def denyPolicies():
 	print("\n")
-	print("Checking for possible deny policies")
+	print("=======[Checking for possible deny policies: $DC]==========")
 	print("To do")
 	return
 
 def currentGPOs():
 	print("\n")
-	print("Checking for currentGPOs to user")
+	print("=======[Checking for currentGPOs to user]==========")
 	print("To do")
 	return	
 
-print("=======[Enumerate dangerous user attributes (not exhaustive)==========")
-print("Need to look into the format of each, belive its in UTF-8 format")
-
 def dangerousAttributes():
+	print("=======[Enumerate dangerous user attributes (not exhaustive)==========")
+	print("Need to look into the format of each, belive its in UTF-8 format")
 	print("\n")
 	search_filter = '(UserPassword=*)'
 	attributes = ['name', 'userpassword']
@@ -281,8 +358,11 @@ def adcs():
 	
 def ldapSec():
 	print("\n")
-	print("LDAP Signing and channel binding")
-	print("To do")
+	print("=======[LDAP Signing and channel binding]==========\n")
+	
+	stream = os.popen(f"nxc ldap DCs.txt -d {args.domain} -u {args.user} -p {args.password} -M ldap-checker | grep LDAP-CHE")
+	output = stream.read()
+	print(output)
 	return
 
 def unconstrainedDelegation():
@@ -290,7 +370,7 @@ def unconstrainedDelegation():
 	search_filter = '(userAccountControl:1.2.840.113556.1.4.803:=524288)'
 	attributes = ['name']
 	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
-	print("=======[Unconstrained Delegation hosts]==========")
+	print("=======[Unconstrained Delegation hosts]==========\n")
 	print("Machines / users that can impersonate any domain user domain wide")
 	for entry in conn.entries:
 	    print(f"{entry.name}")
@@ -301,7 +381,7 @@ def constrainedDelegation():
 	search_filter = '(msds-allowedtodelegateto=*)'
 	attributes = ['name', 'msds-allowedtodelegateto']
 	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
-	print("=======[Constrained Delegation hosts]==========")
+	print("=======[Constrained Delegation hosts]==========\n")
 	print("Machines / users that can impersonate any domain user on specified host/service")
 	for entry in conn.entries:
 	    print(f"{entry.name}, {entry['msds-allowedtodelegateto']}")
@@ -309,8 +389,25 @@ def constrainedDelegation():
 
 def hostsRBDC():
 	print("\n")
-	print("Hosts with the RBCD attribute")
-	print("To do")
+	print("=======[Hosts with the RBCD attribute]==========\n")
+	search_filter = '(msDS-AllowedToActOnBehalfOfOtherIdentity=*)'
+	attributes = ['name', 'msDS-AllowedToActOnBehalfOfOtherIdentity']
+	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
+	print("Machines / users that can impersonate any domain user on specified host/service")
+	for entry in conn.entries:
+	    print(f"\nHosts that have RBCD rights to: {entry.name}")
+	    rbcdRights = []
+	    rbcdObjType = []
+	    raw_sd = entry['msDS-AllowedToActOnBehalfOfOtherIdentity'].raw_values[0]
+	    sd = ldaptypes.SR_SECURITY_DESCRIPTOR(data=raw_sd)
+	    if len(sd["Dacl"].aces) > 0:
+	      for ace in sd["Dacl"].aces:
+	        objsid = "objectSid=" + ace["Ace"]["Sid"].formatCanonical() + ""
+	        search_filter = f'({objsid})'
+	        attributes = ['sAMAccountName']
+	        conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
+	        for entry in conn.entries:
+	        	print(f"{entry.sAMAccountName}\n")
 	return
 
 def gmsa():
@@ -397,7 +494,9 @@ currentGPOs()
 dangerousAttributes()
 kerberoast()
 asreproast()
+base_dn = "CN=Configuration,DC=" + f"{args.domain}".replace(".", ",DC=")
 adcs()
+base_dn = "DC=" + f"{args.domain}".replace(".", ",DC=")
 ldapSec()
 unconstrainedDelegation()
 constrainedDelegation()
