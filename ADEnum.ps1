@@ -298,7 +298,8 @@ function adenum {
     Write-Output ""  
     Write-Host "=======[dMSA Services]==========" -BackgroundColor Red
     Write-Host "Need to expand on later" -ForegroundColor Green
-    ([adsisearcher]"(&(objectClass=msDS-DelegatedManagedServiceAccount))").findAll() | ForEach-Object { $_.properties,""} 
+    ([adsisearcher]"(&(objectClass=msDS-DelegatedManagedServiceAccount))").findAll() | ForEach-Object { $_.properties,""}
+    Write-Host "To add other LDAP method" -ForegroundColor Green
     Write-Output "" 
     Write-Host "=======[GMSA Service Accounts]==========" -BackgroundColor Red
     Write-Host "Need to expand on later. If you are low priv, you may not be able to see these." -ForegroundColor Green
