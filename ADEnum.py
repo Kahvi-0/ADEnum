@@ -243,6 +243,17 @@ def maq():
 	    print(f"MAQ: {entry['ms-DS-MachineAccountQuota']}")
 	return
 	
+def domainGPOs():
+	print("\n")
+	search_filter = '(objectCategory=groupPolicyContainer)'
+	attributes = ['displayname', 'gpcfilesyspath']
+	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
+	print("=======[Enumerating Domain GPOs==========")
+	print(f"\n")
+	for entry in conn.entries:
+	    print(f"{entry.displayname}: {entry.gpcfilesyspath}")
+	return
+	
 def denyPolicies():
 	print("\n")
 	print("=======[Checking for possible deny policies: $DC]==========")
@@ -525,6 +536,7 @@ noPassword()
 interdomainTrust()
 ldapDescriptions()
 maq()
+domainGPOs()
 denyPolicies()
 currentGPOs()
 dangerousAttributes()
