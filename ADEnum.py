@@ -427,7 +427,7 @@ def ldapSec():
 	print("\n")
 	print("=======[LDAP Signing and channel binding]==========\n")
 	
-	stream = os.popen(f"nxc ldap DCs.txt -d {args.domain} -u {args.user} -p {args.password} -M ldap-checker | grep LDAP-CHE")
+	stream = os.popen(f"nxc ldap DCs.txt")
 	output = stream.read()
 	print(output)
 	return
@@ -528,7 +528,12 @@ def obsoleteHosts():
 	  "Windows Server 2008*", "Windows Server 2012*", "Windows Vista*", "Windows 2000"]
 	for entry in conn.entries:
 	    os_name = str(entry.operatingSystem)
-	    ip = socket.gethostbyname(f"{entry.cn}")
+	    try:
+	      ip = socket.gethostbyname(f"{entry.cn}")
+	    except:
+	      ip = "Could not resolve"
+	      continue
+	    
 	    if any(fnmatch.fnmatch(os_name, pattern) for pattern in legacy_os_patterns):
                print(f"{entry.cn} - {os_name} - {ip}")
 	return
