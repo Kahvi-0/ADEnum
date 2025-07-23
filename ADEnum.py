@@ -153,6 +153,18 @@ def domainGroups():
 	    print(f"{entry.samaccountname}")
 	return
 
+def domainWSUS():
+	print("\n")
+	search_filter = '(&(objectClass=serviceConnectionPoint)(keywords=Windows Server Update Services))'
+	attributes = ['cn', 'serviceBindingInformation', 'distinguishedName']
+	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
+	print("=======[WSUS Servers]==========")
+	print("WARNING: WSUS not guaranteed to be in LDAP")
+	for entry in conn.entries:
+	    print(f"WSUS SCP: {entry.cn}")
+	    print(f"URL: {entry.serviceBindingInformation}")
+	return
+
 def dmsaAccounts():
 	print("\n")
 	base_dn = "DC=" + f"{args.domain}".replace(".", ",DC=")
@@ -581,6 +593,7 @@ domainControllers()
 domainTrusts()
 domainUsers()
 domainGroups()
+domainWSUS()
 memberProtectedUsers()
 dmsaAccounts()
 gmsa()
