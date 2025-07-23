@@ -153,6 +153,68 @@ def domainGroups():
 	    print(f"{entry.samaccountname}")
 	return
 
+def dmsaAccounts():
+	print("\n")
+	base_dn = "DC=" + f"{args.domain}".replace(".", ",DC=")
+	search_filter = '(objectclass=msDS-DelegatedManagedServiceAccount)'
+	attributes = ['name']
+	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
+	print("=======[dMSA acounts]==========")
+	print("If you are low priv, you may not be able to see these.")
+	print("If you are low priv and CAN see, then you may be able to compromise the account")
+	print("More info: https://www.semperis.com/blog/golden-dmsa-what-is-dmsa-authentication-bypass/ \n")
+	for entry in conn.entries:
+	    print(f"Name: {entry.name}") 
+	print("\nNext steps: ")
+	print(f"\nimpacket-lookupsid '{args.domain}/{args.user}':'{args.password}'@{args.server} | grep '\$'\n")
+	print("Then eleminate from this list what hosts you cannot find via LDAP searches\n")
+	print("\n------------------------------------------------\n")
+	print("\n= Alt serach - may or may not work for low priv=\n")
+	base_dn = "CN=Managed Service Accounts,DC=" + f"{args.domain}".replace(".", ",DC=")
+	search_filter = '(distinguishedname=*)'
+	attributes = ['name', 'objectclass']
+	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
+	for entry in conn.entries:
+	    if "msDS-DelegatedManagedServiceAccount" in entry.objectClass.values:
+               print(f"Name: {entry.name} - {entry.objectClass}")
+	
+	base_dn = "DC=" + f"{args.domain}".replace(".", ",DC=")
+	return
+
+
+def gmsa():
+	print("\n")
+	search_filter = '(objectClass=msDS-GroupManagedServiceAccount)'
+	attributes = ['name']
+	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
+	print("=======[GMSA Account]========== - To expand later")
+	for entry in conn.entries:
+	    print(f"{entry}")
+	print("\n")
+	search_filter = '(PrincipalsAllowedToRetrieveManagedPassword=*)'
+	attributes = ['name']
+	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
+	for entry in conn.entries:
+	    print(f"{entry}")	    
+	return
+
+def msa():
+	print("\n")
+	search_filter = '(objectClass=msDS-ManagedServiceAccount)'
+	attributes = ['name']
+	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
+	print("=======[Managed Service Account]========== - To expand later")
+	for entry in conn.entries:
+	    print(f"{entry}")
+	print("\n")
+	search_filter = '(PrincipalsAllowedToRetrieveManagedPassword=*)'
+	attributes = ['name']
+	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
+	for entry in conn.entries:
+	    print(f"{entry}")	    
+	return
+
+
 def memberProtectedUsers():
 	print("\n")
 	search_filter = '(&(objectCategory=group)(name=protected users))'
@@ -413,21 +475,6 @@ def hostsRBDC():
 	        	print(f"{entry.sAMAccountName}\n")
 	return
 
-def gmsa():
-	print("\n")
-	search_filter = '(mobjectClass=msDS-ManagedServiceAccount)'
-	attributes = ['name']
-	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
-	print("=======[GMSA Service]========== - To expand later")
-	for entry in conn.entries:
-	    print(f"{entry}")
-	print("\n")
-	search_filter = '(PrincipalsAllowedToRetrieveManagedPassword=*)'
-	attributes = ['name']
-	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
-	for entry in conn.entries:
-	    print(f"{entry}")	    
-	return
 
 def laps():
 	print("\n")
@@ -530,6 +577,9 @@ domainTrusts()
 domainUsers()
 domainGroups()
 memberProtectedUsers()
+dmsaAccounts()
+gmsa()
+msa()
 noDelegation()
 smartCards()
 noPassword()
@@ -549,7 +599,6 @@ ldapSec()
 unconstrainedDelegation()
 constrainedDelegation()
 hostsRBDC()
-gmsa()
 laps()
 sccm()
 mssql()
