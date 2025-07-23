@@ -296,10 +296,18 @@ function adenum {
         }
     }
     Write-Output ""  
-    Write-Host "=======[GMSA Service]==========" -BackgroundColor Red
+    Write-Host "=======[dMSA Services]==========" -BackgroundColor Red
+    Write-Host "Need to expand on later" -ForegroundColor Green
+    ([adsisearcher]"(&(objectClass=msDS-DelegatedManagedServiceAccount))").findAll() | ForEach-Object { $_.properties,""} 
+    Write-Output "" 
+    Write-Host "=======[GMSA Service Accounts]==========" -BackgroundColor Red
+    Write-Host "Need to expand on later. If you are low priv, you may not be able to see these." -ForegroundColor Green
+    ([adsisearcher]"(&(objectClass=msDS-GroupManagedServiceAccount))").findAll() | ForEach-Object { $_.properties,""} 
+    ([adsisearcher]"(&(PrincipalsAllowedToRetrieveManagedPassword=*))").findAll() | ForEach-Object { $_.properties,""} 
+    Write-Output "" 
+    Write-Host "=======[Managed Service Accounts]==========" -BackgroundColor Red
     Write-Host "Need to expand on later" -ForegroundColor Green
     ([adsisearcher]"(&(objectClass=msDS-ManagedServiceAccount))").findAll() | ForEach-Object { $_.properties,""} 
-    ([adsisearcher]"(&(PrincipalsAllowedToRetrieveManagedPassword=*))").findAll() | ForEach-Object { $_.properties,""} 
     Write-Output ""  
     Write-Host "=======[LAPS]==========" -BackgroundColor Red
     ([adsisearcher]"(&(objectCategory=computer)(ms-MCS-AdmPwd=*)(sAMAccountName=*))").findAll() | ForEach-Object { $_.properties}  
