@@ -169,7 +169,7 @@ def dmsaAccounts():
 	print("\n")
 	base_dn = "DC=" + f"{args.domain}".replace(".", ",DC=")
 	search_filter = '(objectclass=msDS-DelegatedManagedServiceAccount)'
-	attributes = ['name']
+	attributes = ['name', 'msDS-GroupMSAMembership', 'msDS-ManagedAccountPrecededByLink']
 	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
 	print("=======[dMSA acounts]==========")
 	print("If you are low priv, you may not be able to see these.")
@@ -177,6 +177,18 @@ def dmsaAccounts():
 	print("More info: https://www.semperis.com/blog/golden-dmsa-what-is-dmsa-authentication-bypass/ \n")
 	for entry in conn.entries:
 	    print(f"Name: {entry.name}") 
+	    print(f"DN of the superseded account: {entry['msDS-ManagedAccountPrecededByLink']}")
+	    raw_sd = entry['msDS-GroupMSAMembership'].raw_values[0]
+	    sd = ldaptypes.SR_SECURITY_DESCRIPTOR(data=raw_sd)
+	    if len(sd["Dacl"].aces) > 0:
+	      for ace in sd["Dacl"].aces:
+	         objsid = "objectSid=" + ace["Ace"]["Sid"].formatCanonical() + ""
+	         search_filter = f'({objsid})'
+	         attributes = ['sAMAccountName']
+	         conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
+	         for entry in conn.entries:
+	        	 print(f"List of principals that are authorized to use this dMSA: {entry.sAMAccountName}\n")
+
 	print("\nNext steps: ")
 	print(f"\nimpacket-lookupsid '{args.domain}/{args.user}':'{args.password}'@{args.server} | grep '\$'\n")
 	print("Then eleminate from this list what hosts you cannot find via LDAP searches\n")
@@ -184,11 +196,23 @@ def dmsaAccounts():
 	print("\n= Alt serach - may or may not work for low priv=\n")
 	base_dn = "CN=Managed Service Accounts,DC=" + f"{args.domain}".replace(".", ",DC=")
 	search_filter = '(distinguishedname=*)'
-	attributes = ['name', 'objectclass']
+	attributes = ['name', 'objectclass', 'msDS-GroupMSAMembership', 'msDS-ManagedAccountPrecededByLink']
 	conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
 	for entry in conn.entries:
 	    if "msDS-DelegatedManagedServiceAccount" in entry.objectClass.values:
-               print(f"Name: {entry.name} - {entry.objectClass}")
+	       print(f"Name: {entry.name}") 
+	       print(f"DN of the superseded account: {entry['msDS-ManagedAccountPrecededByLink']}")
+	       raw_sd2 = entry['msDS-GroupMSAMembership'].raw_values[0]
+	       sd2 = ldaptypes.SR_SECURITY_DESCRIPTOR(data=raw_sd2)
+	       if len(sd2["Dacl"].aces) > 0:
+	         for ace in sd2["Dacl"].aces:
+	            objsid = "objectSid=" + ace["Ace"]["Sid"].formatCanonical() + ""
+	            search_filter = f'({objsid})'
+	            attributes = ['sAMAccountName']
+	            base_dn = "DC=" + f"{args.domain}".replace(".", ",DC=")
+	            conn.search(search_base=base_dn, search_filter=search_filter, search_scope=SUBTREE, attributes=attributes)
+	            for entry in conn.entries:
+	               print(f"List of principals that are authorized to use this dMSA: {entry.sAMAccountName}\n")
 	
 	base_dn = "DC=" + f"{args.domain}".replace(".", ",DC=")
 	return
