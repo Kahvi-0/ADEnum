@@ -297,10 +297,90 @@ function adenum {
     }
     Write-Output ""  
     Write-Host "=======[dMSA Services]==========" -BackgroundColor Red
-    Write-Host "Need to expand on later" -ForegroundColor Green
-    ([adsisearcher]"(&(objectClass=msDS-DelegatedManagedServiceAccount))").findAll() | ForEach-Object { $_.properties,""}
-    Write-Host "To add other LDAP method" -ForegroundColor Green
+    Write-Host "If you are low priv, you may not be able to see these results." -ForegroundColor Green
+    Write-Host "If you are low priv and CAN see, then you may be able to compromise the account." -ForegroundColor Green
+    Write-Host "More info: https://www.semperis.com/blog/golden-dmsa-what-is-dmsa-authentication-bypass/." -ForegroundColor Green
+    $searcher = New-Object System.DirectoryServices.DirectorySearcher
+    $searcher.Filter = "(objectclass=msDS-DelegatedManagedServiceAccount)"
+    $searcher.PageSize = 1000
+    $searcher.PropertiesToLoad.Add("name") | Out-Null
+    $searcher.PropertiesToLoad.Add("msds-managedaccountprecededbylink") | Out-Null
+    $searcher.PropertiesToLoad.Add("msds-groupmsamembership") | Out-Null
+    $results = $searcher.FindAll()
+    foreach ($result in $results) {
+        $dn = $result.Properties["name"][0]
+        $superseded = $result.Properties["msDS-ManagedAccountPrecededByLink"][0]
+        $authprincp = $result.Properties["msds-groupmsamembership"]
+
+        if ($authprincp) {
+            try {
+                # Convert binary security descriptor to readable format
+                $sd = New-Object System.DirectoryServices.ActiveDirectorySecurity
+                $sd.SetSecurityDescriptorBinaryForm($authprincp[0])
+                $aces = $sd.GetAccessRules($true, $true, [System.Security.Principal.SecurityIdentifier])
+
+                Write-Host "`ndSMA name: $dn"
+                Write-Host "DN of the superseded account: $superseded"
+                Write-Host "List of principals that are authorized to use this dMSA:"
+
+                foreach ($ace in $aces) {
+                    $sid = $ace.IdentityReference
+                    try {
+                        $translated = $sid.Translate([System.Security.Principal.NTAccount])
+                        Write-Host " - $translated"
+                    } catch {
+                        Write-Host " - $sid (untranslated)"
+                    }
+                }
+
+            } catch {
+            }
+        }
+    }
     Write-Output "" 
+    Write-Host "Alt method that may let low priv users enumerate dMSA accounts" -ForegroundColor Red
+    Write-Output ""
+    $baseDN = $domainRoot.defaultNamingContext
+    $trustContainerPath = "LDAP://CN=Managed Service Accounts,$baseDN"
+    $trustContainer = [ADSI]$trustContainerPath
+    $searcher = New-Object DirectoryServices.DirectorySearcher($trustContainer)
+    $searcher.Filter = "(distinguishedname=*)"
+    $searcher.PageSize = 1000
+    $searcher.PropertiesToLoad.Add("name") | Out-Null
+    $searcher.PropertiesToLoad.Add("msDS-ManagedAccountPrecededByLink") | Out-Null
+    $searcher.PropertiesToLoad.Add("msds-groupmsamembership") | Out-Null
+    $results = $searcher.FindAll()
+    foreach ($result in $results) {
+        $dn = $result.Properties["name"][0]
+        $superseded = $result.Properties["msDS-ManagedAccountPrecededByLink"][0]
+        $authprincp = $result.Properties["msds-groupmsamembership"]
+    
+        if ($authprincp) {
+            try {
+                # Convert binary security descriptor to readable format
+                $sd = New-Object System.DirectoryServices.ActiveDirectorySecurity
+                $sd.SetSecurityDescriptorBinaryForm($authprincp[0])
+                $aces = $sd.GetAccessRules($true, $true, [System.Security.Principal.SecurityIdentifier])
+    
+                Write-Host "`ndSMA name: $dn"
+                Write-Host "DN of the superseded account: $superseded"
+                Write-Host "List of principals that are authorized to use this dMSA:"
+    
+                foreach ($ace in $aces) {
+                    $sid = $ace.IdentityReference
+                    try {
+                        $translated = $sid.Translate([System.Security.Principal.NTAccount])
+                        Write-Host " - $translated"
+                    } catch {
+                        Write-Host " - $sid (untranslated)"
+                    }
+                }
+    
+            } catch {
+            }
+        }
+    }
+    
     Write-Host "=======[GMSA Service Accounts]==========" -BackgroundColor Red
     Write-Host "Need to expand on later. If you are low priv, you may not be able to see these." -ForegroundColor Green
     ([adsisearcher]"(&(objectClass=msDS-GroupManagedServiceAccount))").findAll() | ForEach-Object { $_.properties,""} 
