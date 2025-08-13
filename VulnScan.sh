@@ -1,15 +1,16 @@
 #!/bin/bash
-nmap -sL -iL ./scope.txt -n 2>/dev/null | grep -oE '[0-9]{0,3}\.[0-9]{0,3}\.[0-9]{0,3}\.[0-9]{0,3}' | sort | uniq >> hosts.txt
-nmap -PS445,80,8080,135,22 -PR -PE -sn -n -T4 --min-hostgroup 250 --min-parallelism 50 --max-rtt-timeout 100ms -iL hosts.txt >> AliveCheck.txt
+rm AliveIPs-nmapvuln.txt hosts-nmapvuln.txt
+nmap -sL -iL $1 -n 2>/dev/null | grep -oE '[0-9]{0,3}\.[0-9]{0,3}\.[0-9]{0,3}\.[0-9]{0,3}' | sort | uniq >> hosts-nmapvuln.txt
+nmap -PS445,80,8080,135,22 -PR -PE -sn -n -T4 --min-hostgroup 250 --min-parallelism 50 --max-rtt-timeout 100ms -iL hosts-nmapvuln.txt >> AliveCheck.txt
 
-cat ./AliveCheck.txt | egrep -o '[0-9]{0,3}\.[0-9]{0,3}\.[0-9]{0,3}\.[0-9]{0,3}' | sort | uniq >> AliveIPs.txt
+cat ./AliveCheck.txt | egrep -o '[0-9]{0,3}\.[0-9]{0,3}\.[0-9]{0,3}\.[0-9]{0,3}' | sort | uniq >> AliveIPs-nmapvuln.txt
 
 echo ===========================
 echo =======Starting Scan=======
 echo ===========================
 
 #scan
-file=$(cat AliveIPs.txt)
+file=$(cat AliveIPs-nmapvuln.txt)
 echo "" > log.txt
 
 for i in $file; do
@@ -20,6 +21,6 @@ for i in $file; do
     echo "" | tee log.txt
     done
 
-rm hosts.txt
+rm hosts-nmapvuln.txt
 rm AliveCheck.txt
-rm AliveIPs.txt
+rm AliveIPs-nmapvuln.txt
