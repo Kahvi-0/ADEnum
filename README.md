@@ -33,6 +33,14 @@ python3 ./ADEnum.py --user [user]@[Domain - uppercase] --password [password] --s
 python3 ./ADEnum.py --user administrator@LAB.LOCAL --password P@ssword! --server dc1.lab.local  --domain lab.local
 
 ```
+# CobraSniffer
+## Passive network sniffer listening for AD traffic that can help enumerate hosts and their hostname
+
+Example:
+```
+ sudo python3 ./cobrasneeze.py --iface eth0 --keywords lab.local,.domain,.mdns,.netbios-dgm
+```
+<img width="479" height="192" alt="image" src="https://github.com/user-attachments/assets/4e200167-2f5f-4203-9eac-7d335a54496b" />
 
 
 
