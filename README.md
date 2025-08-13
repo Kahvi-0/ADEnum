@@ -42,6 +42,10 @@ Windows - ensure that nmap is installed (may need to change the location in the 
 ```
 vulnscan.ps1 scope.txt
 ```
+Linux 
+```
+sudo vulnscan.sh scope.txt
+```
 
 
 ## Passpull
