@@ -33,6 +33,14 @@ python3 ./ADEnum.py --user [user]@[Domain - uppercase] --password [password] --s
 python3 ./ADEnum.py --user administrator@LAB.LOCAL --password P@ssword! --server dc1.lab.local  --domain lab.local
 
 ```
+
+# ADWebServiceDiscovery
+## Scan discovered web ports for known AD web services 
+
+```
+ADWebServiceDiscovery.sh ./scope.txt
+```
+
 # CobraSniffer
 ## Passive network sniffer listening for AD traffic that can help enumerate hosts and their hostname
 
