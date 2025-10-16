@@ -18,7 +18,7 @@ wget https://raw.githubusercontent.com/Kahvi-0/ADEnum/refs/heads/main/ADEnum.py
 
 Requirements
 ```
-sudo apt-get install -y libkrb5-dev
+sudo apt-get install -y libkrb5-dev krb5-user
 pip install gssapi
 pip install impacket
 https://www.netexec.wiki/getting-started/installation
