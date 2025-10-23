@@ -190,7 +190,7 @@ def dmsaAccounts():
 	        	 print(f"List of principals that are authorized to use this dMSA: {entry.sAMAccountName}\n")
 
 	print("\nNext steps: ")
-	print(f"\nimpacket-lookupsid '{args.domain}/{args.user}':'{args.password}'@{args.server} | grep '\$'\n")
+	print(f"\nimpacket-lookupsid '[domain]/[user]':'[pwd]'@[DomainController]")
 	print("Then eleminate from this list what hosts you cannot find via LDAP searches\n")
 	print("\n------------------------------------------------\n")
 	print("\n= Alt serach - may or may not work for low priv=\n")
@@ -463,7 +463,7 @@ def ldapSec():
 	print("\n")
 	print("=======[LDAP Signing and channel binding]==========\n")
 	
-	stream = os.popen(f"nxc ldap DCs.txt")
+	stream = os.popen(f"nxc ldap DCs.txt | grep -o '(name:.*'")
 	output = stream.read()
 	print(output)
 	return
