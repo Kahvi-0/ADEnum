@@ -258,6 +258,9 @@ function adenum {
     Write-Host "Machines / users that can impersonate any domain user on specified host/service" -ForegroundColor Green
     ([adsisearcher]"(&(msds-allowedtodelegateto=*))").findAll() | ForEach-Object { $_.properties.name,$_.properties."msds-allowedtodelegateto",""} 
     Write-Output ""  
+    Write-Host "=======[Kerberos Constrained Delegation hosts]==========" -BackgroundColor Red
+    Write-Host "Impersonate any user account to specific Kerberos services " -ForegroundColor Green
+    Write-Host "To Add: UserAccountControl -BAND 0x1000000 From https://github.com/PyroTek3/Misc/blob/main/Get-ADKerberosDelegation.ps1"  
     Write-Host "=======[Hosts with the RBCD attribute]==========" -BackgroundColor Red
     Write-Output ""  
     $searcher = New-Object System.DirectoryServices.DirectorySearcher
