@@ -490,6 +490,12 @@ def constrainedDelegation():
 	    print(f"{entry.name}, {entry['msds-allowedtodelegateto']}")
 	return
 
+def kerberosconstrainedDelegation()
+	print("\n")
+	print("=======[Kerberos Constrained Delegation]==========\n")
+	print("To add: https://github.com/PyroTek3/Misc/blob/main/Get-ADKerberosDelegation.ps1")
+	return
+
 def hostsRBDC():
 	print("\n")
 	print("=======[Hosts with the RBCD attribute]==========\n")
@@ -640,6 +646,7 @@ base_dn = "DC=" + f"{args.domain}".replace(".", ",DC=")
 ldapSec()
 unconstrainedDelegation()
 constrainedDelegation()
+kerberosconstrainedDelegation()
 hostsRBDC()
 laps()
 sccm()
