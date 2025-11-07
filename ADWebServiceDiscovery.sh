@@ -19,13 +19,17 @@ for i in $(cat ADWebServicesHosts.txt); do
     HTTP_SCCM2=$(curl -s "%{http_code}" http://$i/CCM_system_WindowsAuth)
     HTTP_SCCM3=$(curl -s "%{http_code}" http://$i/CCM_System_AltAuth)
     HTTP_SCCM4=$(curl -s "%{http_code}" http://$i/CCM_System_TokenAuth)
+    HTTP_SCCM5=$(curl -s "%{http_code}" http://$i/AdminService/v1.0/)
+    HTTP_SCCM6=$(curl -s "%{http_code}" http://$i/AdminService/wmi/)
 
     HTTPS_SCCM=$(curl -s "%{http_code}" https://$i/sms_mp/.sms_aut?MPLIST)
     HTTPS_SCCM1=$(curl -s "%{http_code}" https://$i/CCM_System)
     HTTPS_SCCM2=$(curl -s "%{http_code}" https://$i/CCM_system_WindowsAuth)
     HTTPS_SCCM3=$(curl -s "%{http_code}" https://$i/CCM_System_AltAuth)
     HTTPS_SCCM4=$(curl -s "%{http_code}" https://$i/CCM_System_TokenAuth)
-  
+    HTTPS_SCCM5=$(curl -s "%{http_code}" https://$i/AdminService/v1.0/)
+    HTTPS_SCCM6=$(curl -s "%{http_code}" https://$i/AdminService/wmi/)
+    
     #Result logic
     if [ "$HTTP_ADCS" -eq 401 ]; then
     	echo "ADCS Web over HTTP - Got 401 Error"
