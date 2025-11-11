@@ -490,7 +490,7 @@ def constrainedDelegation():
 	    print(f"{entry.name}, {entry['msds-allowedtodelegateto']}")
 	return
 
-def kerberosconstrainedDelegation()
+def kerberosconstrainedDelegation():
 	print("\n")
 	print("=======[Kerberos Constrained Delegation]==========\n")
 	print("To add: https://github.com/PyroTek3/Misc/blob/main/Get-ADKerberosDelegation.ps1")
