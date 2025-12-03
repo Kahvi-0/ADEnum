@@ -13,7 +13,7 @@ adenum
 
 #### Linux:
 ```
-wget https://raw.githubusercontent.com/Kahvi-0/ADEnum/refs/heads/main/ADEnum.sh
+wget https://raw.githubusercontent.com/Kahvi-0/ADEnum/refs/heads/main/ADEnum.sh && chmod +x ADEnum.sh
 ```
 
 Requirements
