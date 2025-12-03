@@ -3,7 +3,7 @@
 
 # ADEnum 
 ## Active Directory Enumeration
-Windows:
+#### Windows:
 ```
 IEX(New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/Kahvi-0/ADEnum/refs/heads/main/ADEnum.ps1')
 adenum
@@ -11,27 +11,36 @@ adenum
 ![ADEnum](https://github.com/user-attachments/assets/ec4171f6-ea5e-4523-9070-166d6c9a2005)
 
 
-Linux:
+#### Linux:
 ```
-wget https://raw.githubusercontent.com/Kahvi-0/ADEnum/refs/heads/main/ADEnum.py 
+wget https://raw.githubusercontent.com/Kahvi-0/ADEnum/refs/heads/main/ADEnum.sh
 ```
 
 Requirements
 ```
-sudo apt-get install -y libkrb5-dev krb5-user
-pip install gssapi
-pip install impacket
-https://www.netexec.wiki/getting-started/installation
+sudo apt-get install -y krb5-user libsasl2-modules-gssapi-mit
 ```
 
 ```
-python3 ./ADEnum.py --user [user]@[Domain - uppercase] --password [password] --server [server]  --domain [domain]
+ADEnum.sh [-u domain\user] [-p password] [-d domain] [-t dc] [-v LDAP/LDAPS] [-l LDAP port]
+
+Required Options:
+
+-u 	Username - Format (Shortform for domain): lab\Admin
+-p		Password
+-d		Domain - Format: test.lab
+-t 	Domain controller - Format: dc1, 10.10.10.1, dc1.lab.local
+
+Optinal Options:
+
+-l		LDAP port
+-v		LDAP type - LDAP or LDAPS
+-k		Use Kerberos authenticaiton
 ```
 
 #Example
 ```
-python3 ./ADEnum.py --user administrator@LAB.LOCAL --password P@ssword! --server dc1.lab.local  --domain lab.local
-
+./ADEnum.sh -u "LAB\Administrator" -p Password123 -d lab.local -t dc2 
 ```
 
 # ADWebServiceDiscovery
