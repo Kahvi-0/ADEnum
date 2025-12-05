@@ -54,7 +54,7 @@ DomainParsed=$(echo "$Domain" | awk -F. '{for(i=1;i<=NF;i++) printf "DC=%s%s", $
 
 if [[ $Kerberos -ne 1 ]]; then
      echo "Not Using Kerberos Authentication"
-     Command=(ldapsearch -LLL -x -H $LDAPv://$DC:$LDAPport -D $USER -w $PASS -b "$DomainParsed")
+     Command=(ldapsearch -LLL -x -H $LDAPv://$DC:$LDAPport -D $USER -w $PASS -b "$DomainParsed" -z 3000)
      SMBClient=(smbclient //$DC/SYSVOL -U "$USER%$PASS")
 else
      echo "Using Kerberos Authentication"
@@ -73,7 +73,7 @@ EOF
      UPPER=$(echo "$Domain" | tr '[:lower:]' '[:upper:]')
      STRIPPED="${USER#*\\}"
      echo $PASS | kinit $STRIPPED@$UPPER
-     Command=(ldapsearch -LLL -Q -Y GSSAPI -H $LDAPv://$DC:$LDAPport -b "$DomainParsed")
+     Command=(ldapsearch -LLL -Q -Y GSSAPI -H $LDAPv://$DC:$LDAPport -b "$DomainParsed" -z 3000)
      SMBClient=(smbclient --use-kerberos=required //$DC/SYSVOL)
      echo ${Command[@]}
 fi
@@ -273,9 +273,10 @@ IFS=$'\n'  SMBS=($(${SMBClient[@]} -c "recurse; ls" \
     print dir "\\" $1            # Append filename to directory path
 }
 ' ))
-for file in $(cat GPOPaths.txt); do
-  GUID=$(echo $file | grep -oE "\{.*}")
+
+for file in "${SMBS[@]}"; do
+  GUID=$(printf '%s\n' $file | grep -oE "\{.*}")
   ${Command[@]} "(objectCategory=groupPolicyContainer)" dn displayname | grep -A2 $GUID | grep displayName
-  ${SMBClient[@]} -c "get \"$file\" -" |  iconv -f UTF-16LE -t UTF-8 | grep -E 'Bad|Password|LockoutDuration|ResetLockout'
+  ${SMBClient[@]} -c "get \"$file\" -" | iconv -f UTF-16LE -t UTF-8//IGNORE 2>/dev/null | grep -E 'Bad|Password|LockoutDuration|ResetLockout'
 echo ""
 done
