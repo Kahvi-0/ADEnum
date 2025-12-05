@@ -54,7 +54,7 @@ DomainParsed=$(echo "$Domain" | awk -F. '{for(i=1;i<=NF;i++) printf "DC=%s%s", $
 
 if [[ $Kerberos -ne 1 ]]; then
      echo "Not Using Kerberos Authentication"
-     Command=(ldapsearch -LLL -x -H $LDAPv://$DC:$LDAPport -D $USER -w $PASS -b "$DomainParsed" -z 0)
+     Command=(ldapsearch -LLL -x -H $LDAPv://$DC:$LDAPport -D $USER -w $PASS -b "$DomainParsed" -E pr=1000/noprompt)
      SMBClient=(smbclient //$DC/SYSVOL -U "$USER%$PASS")
 else
      echo "Using Kerberos Authentication"
@@ -73,7 +73,7 @@ EOF
      UPPER=$(echo "$Domain" | tr '[:lower:]' '[:upper:]')
      STRIPPED="${USER#*\\}"
      echo $PASS | kinit $STRIPPED@$UPPER
-     Command=(ldapsearch -LLL -Q -Y GSSAPI -H $LDAPv://$DC:$LDAPport -b "$DomainParsed" -z 0)
+     Command=(ldapsearch -LLL -Q -Y GSSAPI -H $LDAPv://$DC:$LDAPport -b "$DomainParsed" -E pr=1000/noprompt)
      SMBClient=(smbclient --use-kerberos=required //$DC/SYSVOL)
      echo ${Command[@]}
 fi
