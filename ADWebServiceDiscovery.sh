@@ -39,63 +39,63 @@ for i in $(cat ADWebServicesHosts.txt); do
     fi    
 
     # WSUS Web
-    if [ "$HTTP_WSUS" -nq 404 ]; then
+    if [ "$HTTP_WSUS" != 404 && "$HTTP_WSUS" != 503 && "$HTTP_WSUS" != 000 ]; then
     	echo "$i - WSUS Web over HTTP - $HTTP_WSUS Returned"
     fi
-    if [ "$HTTP_WSUS1" -nq 404 ]; then
+    if [ "$HTTP_WSUS1" -ne 404 ]; then
     	echo "$i - WSUS Web over HTTP - $HTTP_WSUS1 Returned"
     fi
-    if [ "$HTTP_WSUS2" -nq 404 ]; then
+    if [ "$HTTP_WSUS2" -ne 404 ]; then
     	echo "$i - WSUS Web over HTTP - $HTTP_WSUS2 Returned"
     fi
 
     # SCCM Web    
-    if [ "$HTTP_SCCM" -nq 404 ]; then
+    if [ "$HTTP_SCCM" -ne 404 ]; then
     	echo "$i - SCCM Web over HTTP - $HTTP_SCCM Returned"
     fi
-    if [ "$HTTPS_SCCM" -nq 404 ]; then
+    if [ "$HTTPS_SCCM" -ne 404 ]; then
     	echo "$i - SCCM Web over HTTPS - $HTTPS_SCCM Returned"
     fi    
 
-    if [ "$HTTP_SCCM1" -nq 404 ]; then
+    if [ "$HTTP_SCCM1" -ne 404 ]; then
     	echo "$i - SCCM Web over HTTP - $HTTP_SCCM1 Returned"
     fi
-    if [ "$HTTPS_SCCM1" -nq 404 ]; then
+    if [ "$HTTPS_SCCM1" -ne 404 ]; then
     	echo "$i - SCCM Web over HTTPS - $HTTPS_SCCM1 Returned"
     fi    
 
-    if [ "$HTTP_SCCM2" -nq 404 ]; then
+    if [ "$HTTP_SCCM2" -ne 404 ]; then
     	echo "$i - SCCM Web over HTTP - $HTTP_SCCM2 Returned"
     fi
-    if [ "$HTTPS_SCCM2" -nq 404 ]; then
+    if [ "$HTTPS_SCCM2" -ne 404 ]; then
     	echo "$i - SCCM Web over HTTPS - $HTTPS_SCCM2 Returned"
     fi    
 
-    if [ "$HTTP_SCCM3" -nq 404 ]; then
+    if [ "$HTTP_SCCM3" -ne 404 ]; then
     	echo "$i - SCCM Web over HTTP - $HTTP_SCCM3 Returned"
     fi
-    if [ "$HTTPS_SCCM3" -nq 404 ]; then
+    if [ "$HTTPS_SCCM3" -ne 404 ]; then
     	echo "$i - SCCM Web over HTTPS - $HTTPS_SCCM3 Returned"
     fi    
 
-    if [ "$HTTP_SCCM4" -nq 404 ]; then
+    if [ "$HTTP_SCCM4" -ne 404 ]; then
     	echo "$i - SCCM Web over HTTP - $HTTP_SCCM4 Returned"
     fi
-    if [ "$HTTPS_SCCM4" -nq 404 ]; then
+    if [ "$HTTPS_SCCM4" -ne 404 ]; then
     	echo "$i - SCCM Web over HTTPS - $HTTPS_SCCM4 Returned"
     fi    
 
-    if [ "$HTTP_SCCM5" -nq 404 ]; then
+    if [ "$HTTP_SCCM5" -ne 404 ]; then
     	echo "$i - SCCM Web over HTTP - $HTTP_SCCM5 Returned"
     fi
-    if [ "$HTTPS_SCCM5" -nq 404 ]; then
+    if [ "$HTTPS_SCCM5" -ne 404 ]; then
     	echo "$i - SCCM Web over HTTPS - $HTTPS_SCCM5 Returned"
     fi    
 
-    if [ "$HTTP_SCCM6" -nq 404 ]; then
+    if [ "$HTTP_SCCM6" -ne 404 ]; then
     	echo "$i - SCCM Web over HTTP - $HTTP_SCCM6 Returned"
     fi
-    if [ "$HTTPS_SCCM6" -nq 404 ]; then
+    if [ "$HTTPS_SCCM6" -ne 404 ]; then
     	echo "$i - SCCM Web over HTTPS - $HTTPS_SCCM6 Returned"
     fi    
     
