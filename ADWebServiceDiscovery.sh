@@ -1,103 +1,120 @@
-rm ADWebServicesCheck*
-nmap -sT -Pn --resolve-all --open -p 80,443,8530 -iL $1 -oA ADWebServicesCheck >/dev/null 2>&1
-cat ADWebServicesCheck.gnmap | grep Host | awk -F " " '{print$2}' | sort -u | sed '/^$/d' > ADWebServicesHosts-temp.txt
-cat ADWebServicesCheck.gnmap | grep Host | awk -F " " '{print$3}' | sed 's|[(),]||g' | sort -u | sed '/^$/d' >> ADWebServicesHosts-temp.txt
-cat ADWebServicesHosts-temp.txt | sort -u > ADWebServicesHosts.txt
+#!/usr/bin/env bash
 
-for i in $(cat ADWebServicesHosts.txt); do 
-    #Looking for ADCS endpoints
-    HTTP_ADCS=$(curl -s -o /dev/null -w  "%{http_code}" http://$i/certsrv/certfnsh.asp)
-    HTTPS_ADCS=$(curl -s -o /dev/null -w  "%{http_code}" https://$i/certsrv/certfnsh.asp)
-    #Looking for WSUS endpoints
-    HTTP_WSUS=$(curl -s -o /dev/null -w "%{http_code}" http://$i:8530/ClientWebService/SimpleAuth.asmx)
-    HTTP_WSUS1=$(curl -s -o /dev/null -w "%{http_code}" http://$i:8530/ClientWebService/Client.asmx)
-    HTTP_WSUS2=$(curl -s -o /dev/null -w "%{http_code}" http://$i:8530/ApiRemoting30/WebServices.asmx)
-    #Looking for SCCM endpoints
-    HTTP_SCCM=$(curl -s -o /dev/null -w "%{http_code}" http://$i/sms_mp/.sms_aut?MPLIST)
-    HTTP_SCCM1=$(curl -s -o /dev/null -w "%{http_code}" http://$i/CCM_System)
-    HTTP_SCCM2=$(curl -s -o /dev/null -w "%{http_code}" http://$i/CCM_system_WindowsAuth)
-    HTTP_SCCM3=$(curl -s -o /dev/null -w "%{http_code}" http://$i/CCM_System_AltAuth)
-    HTTP_SCCM4=$(curl -s -o /dev/null -w "%{http_code}" http://$i/CCM_System_TokenAuth)
-    HTTP_SCCM5=$(curl -s -o /dev/null -w "%{http_code}" http://$i/AdminService/v1.0/)
-    HTTP_SCCM6=$(curl -s -o /dev/null -w "%{http_code}" http://$i/AdminService/wmi/)
+set -u
 
-    HTTPS_SCCM=$(curl -s -o /dev/null -w "%{http_code}" https://$i/sms_mp/.sms_aut?MPLIST)
-    HTTPS_SCCM1=$(curl -s -o /dev/null -w "%{http_code}" https://$i/CCM_System)
-    HTTPS_SCCM2=$(curl -s -o /dev/null -w "%{http_code}" https://$i/CCM_system_WindowsAuth)
-    HTTPS_SCCM3=$(curl -s -o /dev/null -w "%{http_code}" https://$i/CCM_System_AltAuth)
-    HTTPS_SCCM4=$(curl -s -o /dev/null -w "%{http_code}" https://$i/CCM_System_TokenAuth)
-    HTTPS_SCCM5=$(curl -s -o /dev/null -w "%{http_code}" https://$i/AdminService/v1.0/)
-    HTTPS_SCCM6=$(curl -s -o /dev/null -w "%{http_code}" https://$i/AdminService/wmi/)
-    
-    #Result logic
-    # ADCS Web
-    if [ "$HTTP_ADCS" -eq 401 ]; then
-    	echo "$i - ADCS Web over HTTP - Got 401 Error"
-    fi
-    if [ "$HTTPS_ADCS" -eq 401 ]; then
-    	echo "$i - ADCS Web over HTTPS - Got 401 Error"
-    fi    
+usage() {
+    echo "Usage: $0 <targets_file>"
+    exit 1
+}
 
-    # WSUS Web
-    if [ "$HTTP_WSUS" != 404 && "$HTTP_WSUS" != 503 && "$HTTP_WSUS" != 000 ]; then
-    	echo "$i - WSUS Web over HTTP - $HTTP_WSUS Returned"
-    fi
-    if [ "$HTTP_WSUS1" -ne 404 ]; then
-    	echo "$i - WSUS Web over HTTP - $HTTP_WSUS1 Returned"
-    fi
-    if [ "$HTTP_WSUS2" -ne 404 ]; then
-    	echo "$i - WSUS Web over HTTP - $HTTP_WSUS2 Returned"
+curl_code() {
+    local url="$1"
+    local code
+    code="$(curl -k -sS -o /dev/null -w "%{http_code}" --connect-timeout 5 --max-time 10 "$url" 2>/dev/null)"
+
+    if [[ $? -ne 0 || ! "$code" =~ ^[0-9]{3}$ ]]; then
+        printf "000"
+        return
     fi
 
-    # SCCM Web    
-    if [ "$HTTP_SCCM" -ne 404 ]; then
-    	echo "$i - SCCM Web over HTTP - $HTTP_SCCM Returned"
-    fi
-    if [ "$HTTPS_SCCM" -ne 404 ]; then
-    	echo "$i - SCCM Web over HTTPS - $HTTPS_SCCM Returned"
-    fi    
+    printf "%s" "$code"
+}
 
-    if [ "$HTTP_SCCM1" -ne 404 ]; then
-    	echo "$i - SCCM Web over HTTP - $HTTP_SCCM1 Returned"
-    fi
-    if [ "$HTTPS_SCCM1" -ne 404 ]; then
-    	echo "$i - SCCM Web over HTTPS - $HTTPS_SCCM1 Returned"
-    fi    
+targets_file="${1:-}"
+[[ -n "$targets_file" && -f "$targets_file" ]] || usage
 
-    if [ "$HTTP_SCCM2" -ne 404 ]; then
-    	echo "$i - SCCM Web over HTTP - $HTTP_SCCM2 Returned"
-    fi
-    if [ "$HTTPS_SCCM2" -ne 404 ]; then
-    	echo "$i - SCCM Web over HTTPS - $HTTPS_SCCM2 Returned"
-    fi    
+rm -f ADWebServicesCheck.gnmap ADWebServicesCheck.nmap ADWebServicesCheck.xml ADWebServicesHosts-temp.txt ADWebServicesHosts.txt
 
-    if [ "$HTTP_SCCM3" -ne 404 ]; then
-    	echo "$i - SCCM Web over HTTP - $HTTP_SCCM3 Returned"
-    fi
-    if [ "$HTTPS_SCCM3" -ne 404 ]; then
-    	echo "$i - SCCM Web over HTTPS - $HTTPS_SCCM3 Returned"
-    fi    
+nmap -sT -Pn --resolve-all --open -p 80,443,8530 -iL "$targets_file" -oA ADWebServicesCheck >/dev/null 2>&1
 
-    if [ "$HTTP_SCCM4" -ne 404 ]; then
-    	echo "$i - SCCM Web over HTTP - $HTTP_SCCM4 Returned"
-    fi
-    if [ "$HTTPS_SCCM4" -ne 404 ]; then
-    	echo "$i - SCCM Web over HTTPS - $HTTPS_SCCM4 Returned"
-    fi    
+awk '/Host: / { print $2; gsub(/[(),]/, "", $3); print $3 }' ADWebServicesCheck.gnmap | sed '/^$/d' | sort -u > ADWebServicesHosts.txt
 
-    if [ "$HTTP_SCCM5" -ne 404 ]; then
-    	echo "$i - SCCM Web over HTTP - $HTTP_SCCM5 Returned"
-    fi
-    if [ "$HTTPS_SCCM5" -ne 404 ]; then
-    	echo "$i - SCCM Web over HTTPS - $HTTPS_SCCM5 Returned"
-    fi    
+if [[ ! -s ADWebServicesHosts.txt ]]; then
+    echo "No responsive hosts found in scan output."
+    exit 0
+fi
 
-    if [ "$HTTP_SCCM6" -ne 404 ]; then
-    	echo "$i - SCCM Web over HTTP - $HTTP_SCCM6 Returned"
-    fi
-    if [ "$HTTPS_SCCM6" -ne 404 ]; then
-    	echo "$i - SCCM Web over HTTPS - $HTTPS_SCCM6 Returned"
-    fi    
-    
-done
+wsus_paths=(
+    "/ClientWebService/SimpleAuth.asmx"
+    "/ClientWebService/Client.asmx"
+    "/ApiRemoting30/WebServices.asmx"
+)
 
+sccm_paths=(
+    "/sms_mp/.sms_aut?MPLIST"
+    "/CCM_System"
+    "/CCM_system_WindowsAuth"
+    "/CCM_System_AltAuth"
+    "/CCM_System_TokenAuth"
+    "/AdminService/v1.0/"
+    "/AdminService/wmi/"
+)
+
+while IFS= read -r host; do
+    host_has_match=0
+    adcs_output=""
+    wsus_output=""
+    sccm_output=""
+
+    # ADCS
+    http_adcs="$(curl_code "http://$host/certsrv/certfnsh.asp")"
+    https_adcs="$(curl_code "https://$host/certsrv/certfnsh.asp")"
+
+    if [[ "$http_adcs" == "401" ]]; then
+        adcs_output+="    - HTTP  /certsrv/certfnsh.asp -> $http_adcs"$'\n'
+        host_has_match=1
+    fi
+    if [[ "$https_adcs" == "401" ]]; then
+        adcs_output+="    - HTTPS /certsrv/certfnsh.asp -> $https_adcs"$'\n'
+        host_has_match=1
+    fi
+
+    # WSUS
+    for path in "${wsus_paths[@]}"; do
+        code_http="$(curl_code "http://$host:8530$path")"
+        code_https="$(curl_code "https://$host:8531$path")"
+
+        if [[ "$code_http" != "000" && "$code_http" != "404" && "$code_http" != "503" ]]; then
+            wsus_output+="    - HTTP  :8530$path -> $code_http"$'\n'
+            host_has_match=1
+        fi
+
+        if [[ "$code_https" != "000" && "$code_https" != "404" && "$code_https" != "503" ]]; then
+            wsus_output+="    - HTTPS :8531$path -> $code_https"$'\n'
+            host_has_match=1
+        fi
+    done
+
+    # SCCM
+    for proto in http https; do
+        for path in "${sccm_paths[@]}"; do
+            code="$(curl_code "$proto://$host$path")"
+
+            if [[ "$code" != "000" && "$code" != "404" ]]; then
+                sccm_output+="    - ${proto^^} $path -> $code"$'\n'
+                host_has_match=1
+            fi
+        done
+    done
+
+    if [[ "$host_has_match" -eq 1 ]]; then
+        echo "$host - AD Web Service Checks"
+
+        if [[ -n "$adcs_output" ]]; then
+            echo "  ADCS checks"
+            printf "%s" "$adcs_output"
+        fi
+
+        if [[ -n "$wsus_output" ]]; then
+            echo "  WSUS checks"
+            printf "%s" "$wsus_output"
+        fi
+
+        if [[ -n "$sccm_output" ]]; then
+            echo "  SCCM checks"
+            printf "%s" "$sccm_output"
+        fi
+
+        echo
+    fi
+done < ADWebServicesHosts.txt
