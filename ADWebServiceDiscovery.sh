@@ -20,6 +20,17 @@ curl_code() {
     printf "%s" "$code"
 }
 
+is_ignored_code() {
+    local code="$1"
+    local ignored
+
+    for ignored in "${ignore_codes[@]}"; do
+        [[ "$code" == "$ignored" ]] && return 0
+    done
+
+    return 1
+}
+
 targets_file="${1:-}"
 [[ -n "$targets_file" && -f "$targets_file" ]] || usage
 
@@ -50,6 +61,8 @@ sccm_paths=(
     "/AdminService/wmi/"
 )
 
+ignore_codes=(000 301 302 404 500 502 503)
+
 while IFS= read -r host; do
     host_has_match=0
     adcs_output=""
@@ -57,41 +70,52 @@ while IFS= read -r host; do
     sccm_output=""
 
     # ADCS
-    http_adcs="$(curl_code "http://$host/certsrv/certfnsh.asp")"
-    https_adcs="$(curl_code "https://$host/certsrv/certfnsh.asp")"
+    adcs_http_url="http://$host:80/certsrv/certfnsh.asp"
+    adcs_https_url="https://$host:443/certsrv/certfnsh.asp"
+    http_adcs="$(curl_code "$adcs_http_url")"
+    https_adcs="$(curl_code "$adcs_https_url")"
 
     if [[ "$http_adcs" == "401" ]]; then
-        adcs_output+="    - HTTP  /certsrv/certfnsh.asp -> $http_adcs"$'\n'
+        adcs_output+="    - $adcs_http_url -> $http_adcs"$'\n'
         host_has_match=1
     fi
     if [[ "$https_adcs" == "401" ]]; then
-        adcs_output+="    - HTTPS /certsrv/certfnsh.asp -> $https_adcs"$'\n'
+        adcs_output+="    - $adcs_https_url -> $https_adcs"$'\n'
         host_has_match=1
     fi
 
     # WSUS
     for path in "${wsus_paths[@]}"; do
-        code_http="$(curl_code "http://$host:8530$path")"
-        code_https="$(curl_code "https://$host:8531$path")"
+        wsus_http_url="http://$host:8530$path"
+        wsus_https_url="https://$host:8531$path"
+        code_http="$(curl_code "$wsus_http_url")"
+        code_https="$(curl_code "$wsus_https_url")"
 
-        if [[ "$code_http" != "000" && "$code_http" != "404" && "$code_http" != "503" ]]; then
-            wsus_output+="    - HTTP  :8530$path -> $code_http"$'\n'
+        if ! is_ignored_code "$code_http"; then
+            wsus_output+="    - $wsus_http_url -> $code_http"$'\n'
             host_has_match=1
         fi
 
-        if [[ "$code_https" != "000" && "$code_https" != "404" && "$code_https" != "503" ]]; then
-            wsus_output+="    - HTTPS :8531$path -> $code_https"$'\n'
+        if ! is_ignored_code "$code_https"; then
+            wsus_output+="    - $wsus_https_url -> $code_https"$'\n'
             host_has_match=1
         fi
     done
 
     # SCCM
     for proto in http https; do
-        for path in "${sccm_paths[@]}"; do
-            code="$(curl_code "$proto://$host$path")"
+        if [[ "$proto" == "http" ]]; then
+            port=80
+        else
+            port=443
+        fi
 
-            if [[ "$code" != "000" && "$code" != "404" ]]; then
-                sccm_output+="    - ${proto^^} $path -> $code"$'\n'
+        for path in "${sccm_paths[@]}"; do
+            sccm_url="$proto://$host:$port$path"
+            code="$(curl_code "$sccm_url")"
+
+            if ! is_ignored_code "$code"; then
+                sccm_output+="    - $sccm_url -> $code"$'\n'
                 host_has_match=1
             fi
         done
