@@ -103,7 +103,7 @@ echo -e "${GREEN}=====[Domain Users - Saved to DomainUsers-AuthenticatedLDAP.txt
 ${Command[@]} "(objectClass=user)" sAMAccountName | grep sAMAccountName.* | awk -F " " '{print substr($0, index($0,$2))}' > DomainUsers-AuthenticatedLDAP.txt
 
 echo -e "${GREEN}=====[Domain Users that do not require password- Saved to DomainUsers-NoPwdRequired.txt]=====${NC}"
-${Command[@]} "(userAccountControl:1.2.840.113556.1.4.803:=32)" sAMAccountName | grep sAMAccountName | awk -F " " '{print substr($0, index($0,$2))}'
+${Command[@]} "(userAccountControl:1.2.840.113556.1.4.803:=32)" sAMAccountName | grep sAMAccountName | awk -F " " '{print substr($0, index($0,$2))}' > DomainUsers-NoPwdRequired.txt
 
 echo -e "${GREEN}=====[Domain Groups]=====${NC}"
 ${Command[@]} "(objectcategory=group)" samaccountname | grep sAMAccountName.* | awk -F " " '{print substr($0, index($0,$2))}'
