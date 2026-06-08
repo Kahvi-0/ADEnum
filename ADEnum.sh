@@ -12,7 +12,7 @@ usage() {
     echo "ADEnum.sh [-u domain\user] [-p password] [-d domain] [-t dc] [-v LDAP/LDAPS] [-l LDAP port] "
     echo ""
     echo -e "Required Options:\n"
-    echo -e "-u 	Username - Format (Shortform for domain): lab\Admin"
+    echo -e "-u 	Username - Format (Shortform for domain): lab\Admin. NOTE: do not add domain when using kerberos"
     echo -e "-p		Password"
     echo -e "-d		Domain - Format: test.lab"
     echo -e "-t 	Domain controller - Format: dc1, 10.10.10.1, dc1.lab.local\n"
@@ -20,9 +20,10 @@ usage() {
     echo -e "Optinal Options:\n"
     echo -e "-l		LDAP port"
     echo -e "-v		LDAP type - LDAP or LDAPS"
-    echo -e "-k		Use Kerberos authenticaiton\n"
+    echo -e "-k		Use Kerberos authenticaiton - supports channel binding\n"
 
-    echo 'example: ./ADEnum.sh -u "LAB\Administrator" -p Password123 -d lab.local -t dc2'
+    echo 'normal example: ./ADEnum.sh -u "lab\Administrator" -p Password123 -d lab.local -t dc2'
+    echo 'kerberos LDAP channel-binding example: ./ADEnum.sh -u "Administrator" -p Password123 -d lab.local -t dc2'
     exit 1
 }
 
@@ -54,27 +55,16 @@ DomainParsed=$(echo "$Domain" | awk -F. '{for(i=1;i<=NF;i++) printf "DC=%s%s", $
 
 if [[ $Kerberos -ne 1 ]]; then
      echo "Not Using Kerberos Authentication"
-     Command=(ldapsearch -LLL -x -H $LDAPv://$DC:$LDAPport -D $USER -w $PASS -b "$DomainParsed" -E pr=1000/noprompt)
+     Command=(ldapsearch -LLL -x -H $LDAPv://$DC:$LDAPport -D $domain\\$USER -w $PASS -b "$DomainParsed" -E pr=1000/noprompt)
      SMBClient=(smbclient //$DC/SYSVOL -U "$USER%$PASS")
 else
+#Review
      echo "Using Kerberos Authentication"
-
-     cat > /tmp/krb5_lab.conf << 'EOF'
-[libdefaults]
-  default_realm = LAB.LOCAL
-
-[realms]
-  LAB.LOCAL = {
-   kdc = dc2.lab.local
-  }
-EOF
-
-     export KRB5_CONFIG=/tmp/krb5_lab.conf
-     UPPER=$(echo "$Domain" | tr '[:lower:]' '[:upper:]')
-     STRIPPED="${USER#*\\}"
-     echo $PASS | kinit $STRIPPED@$UPPER
-     Command=(ldapsearch -LLL -Q -Y GSSAPI -H $LDAPv://$DC:$LDAPport -b "$DomainParsed" -E pr=1000/noprompt)
-     SMBClient=(smbclient --use-kerberos=required //$DC/SYSVOL)
+     sudo apt install libsasl2-modules-gssapi-mit
+     wget https://raw.githubusercontent.com/fortra/impacket/refs/heads/master/examples/getTGT.py
+     python3 ./getTGT.py -dc-ip $DC $domain/$USER:$PASS
+     export KRB5CCNAME=$USER.ccache
+     Command=(ldapsearch -LLL -Y GSSAPI -H $LDAPv://$DC:$LDAPport -b "$DomainParsed" -E pr=1000/noprompt)
      echo ${Command[@]}
 fi
 
