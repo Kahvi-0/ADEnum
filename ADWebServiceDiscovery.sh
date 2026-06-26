@@ -17,7 +17,7 @@ usage() {
 curl_status() {
     local url="$1"
     local status
-    status="$(curl -sIk "$url" | awk 'NR==1 {print substr( $0, index( $0, $3))}')"
+    status="$(curl -sIk "$url" --connect-timeout 5 --max-time 10 | awk 'NR==1 {print substr( $0, index( $0, $3))}')"
 
 
     printf "%s" "$status"
@@ -26,7 +26,7 @@ curl_status() {
 curl_code() {
     local url="$1"
     local code
-    code="$(curl -k -sS -o /dev/null -w "%{http_code}" --connect-timeout 5 --max-time 10 "$url" 2>/dev/null)"
+    code="$(curl -k -sS -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 10 "$url" 2>/dev/null)"
     
 
     if [[ $? -ne 0 || ! "$code" =~ ^[0-9]{3}$ ]]; then
@@ -54,6 +54,8 @@ targets_file="${1:-}"
 rm -f ADWebServicesCheck.gnmap ADWebServicesCheck.nmap ADWebServicesCheck.xml ADWebServicesHosts-temp.txt ADWebServicesHosts.txt
 
 nmap -sT -Pn --resolve-all --open -p 80,443,8530 -iL "$targets_file" -oA ADWebServicesCheck >/dev/null 2>&1
+
+
 
 awk '/Host: / { print $2; gsub(/[(),]/, "", $3); print $3 }' ADWebServicesCheck.gnmap | sed '/^$/d' | sort -u > ADWebServicesHosts.txt
 
@@ -121,6 +123,15 @@ while IFS= read -r host; do
     done
 
     # SCCM
+    
+     #Port 10123 Cert Chec
+    sslcheck="$(openssl s_client -connect $host:10123  2>/dev/null | grep -oi CN=.* | sort -u)"
+    if [ -n "$sslcheck" ]; then
+         sccm_output+="     "$'\n'
+         sccm_output+="   ${YELLOW}Port 10123 TLS Cert Check - CN/Port can deterime if this is SCCM host${RESET}"$'\n'
+	 sccm_output+="   $sslcheck  "$'\n'
+    fi
+    
     for proto in http https; do
         if [[ "$proto" == "http" ]]; then
             port=80
@@ -128,13 +139,14 @@ while IFS= read -r host; do
             port=443
         fi
 
+
         for path in "/sms_mp/.sms_aut?MPLIST"; do
             sccm_url="$proto://$host:$port$path"
             code="$(curl_code "$sccm_url")"
             status="$(curl_status $sccm_url)"
             MPCheck="$(curl -sk $sccm_url | grep MPList)"
             message="$(echo 'HTTPS mTLS Mode Enforced')"
-	    sccmmode=$(curl -ski "$sccm_url" | grep -o SSLState.............)
+	    sccmmode="$(curl -ski "$sccm_url" | grep -o SSLState.............)"
 	    	    
             if ! is_ignored_code "$code"; then
             	if [[ "$code" -eq "200" && $MPCheck = *"MPList"* ]]; then
