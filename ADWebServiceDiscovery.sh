@@ -137,7 +137,7 @@ while IFS= read -r host; do
 	    sccmmode=$(curl -ski "$sccm_url" | grep -o SSLState.............)
 	    	    
             if ! is_ignored_code "$code"; then
-            	if [ "$code" -eq "200" ]; then
+            	if [[ "$code" -eq "200" && $MPCheck = *"MPList"* ]]; then
 		        sccm_output+="     "$'\n'
 		        sccm_output+="    ${RED}Management Point Metadata"$'\n'
 		        sccm_output+="    Non mTLS traffic enforced for this endpoint${RESET}"$'\n'
@@ -179,7 +179,6 @@ while IFS= read -r host; do
             sccm_url="$proto://$host:$port$path"
             code="$(curl_code "$sccm_url")"
             status="$(curl_status $sccm_url)"
-            MPCheck="$(curl -sk $sccm_url | grep MPList)"
             message="$(echo 'HTTPS mTLS Mode Enforced')"
 
             if ! is_ignored_code "$code"; then
